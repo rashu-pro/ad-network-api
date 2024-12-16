@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\AdvertiserRegisteredController;
+use App\Http\Controllers\Api\Auth\AdvertiserLoginController;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
@@ -20,6 +21,8 @@ Route::prefix('admin')->group(function () {
 Route::prefix('advertiser')->group(function (){
     Route::post('/register', [AdvertiserRegisteredController::class, 'store'])
         ->middleware('guest');
+    Route::post('/login',[AdvertiserLoginController::class,'login']);
+    Route::post('/get-access-token',[AdvertiserLoginController::class,'refresh']);
 });
 
 

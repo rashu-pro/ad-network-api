@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Advertiser;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 
@@ -25,7 +24,7 @@ class AdvertiserRegisteredController extends Controller
         $request->validate([
             'advertiser_name' => ['required', 'string', 'max:255'],
             'company_name' => ['string', 'max:255'],
-            'advertiser_email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.Advertiser::class],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.Advertiser::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'advertiser_phone' => ['string', 'max:255'],
             'advertiser_website' => ['string', 'max:255'],
@@ -35,7 +34,7 @@ class AdvertiserRegisteredController extends Controller
         $advertiser = Advertiser::create([
             'advertiser_name' => $request->advertiser_name,
             'company_name' => $request->company_name,
-            'advertiser_email' => $request->advertiser_email,
+            'email' => $request->email,
             'password' => Hash::make($request->string('password')),
             'advertiser_phone' => $request->advertiser_phone,
             'advertiser_website' => $request->advertiser_website,
