@@ -5,8 +5,7 @@ use App\Http\Controllers\Api\Auth\AdminLoginController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-
-use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Api\Auth\AdvertiserRegisteredController;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
@@ -18,8 +17,9 @@ Route::prefix('admin')->group(function () {
         return Auth::guard('admin')->user();
     })->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
 });
-
-Route::post('/advertiser/register', [\App\Http\Controllers\Api\Auth\AdvertiserRegisteredController::class, 'store'])
-    ->middleware('guest');
+Route::prefix('advertiser')->group(function (){
+    Route::post('/register', [AdvertiserRegisteredController::class, 'store'])
+        ->middleware('guest');
+});
 
 
