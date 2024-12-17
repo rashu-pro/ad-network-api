@@ -23,6 +23,9 @@ Route::prefix('advertiser')->group(function (){
         ->middleware('guest');
     Route::post('/login',[AdvertiserLoginController::class,'login']);
     Route::post('/get-access-token',[AdvertiserLoginController::class,'refresh']);
+    Route::get('/profile',function (Request $request) {
+        return Auth::guard('advertiser')->user();
+    })->middleware(['auth:advertiser','abilities:'.TokenAbility::ACCESS_API->value]);
 });
 
 

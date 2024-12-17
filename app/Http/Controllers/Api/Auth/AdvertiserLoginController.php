@@ -4,11 +4,8 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Enums\TokenAbility;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\AdminLoginRequest;
 use App\Http\Requests\Auth\AdvertiserLoginRequest;
-use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Advertiser;
-use App\Models\User;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
