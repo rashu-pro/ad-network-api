@@ -2,6 +2,8 @@
 
 use App\Enums\TokenAbility;
 use App\Http\Controllers\Api\Auth\AdminLoginController;
+use App\Http\Controllers\Api\DigitalAssetsController;
+use App\Http\Controllers\Api\PackagesController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -28,4 +30,16 @@ Route::prefix('advertiser')->group(function (){
     })->middleware(['auth:advertiser','abilities:'.TokenAbility::ACCESS_API->value]);
 });
 
-
+Route::prefix('digital-assets')->group(function () {
+    Route::get('/', [DigitalAssetsController::class, 'index']);
+    Route::get('/{id}', [DigitalAssetsController::class, 'show']);
+    Route::post('/', [DigitalAssetsController::class, 'store']);
+    Route::post('delete/{id}', [DigitalAssetsController::class, 'destroy']);
+});
+Route::prefix('packages')->group(function () {
+    Route::get('/', [PackagesController::class, 'index']);
+    Route::get('/{id}', [PackagesController::class, 'show']);
+    Route::post('/', [PackagesController::class, 'store']);
+    Route::post('update/{id}', [PackagesController::class, 'update']);
+    Route::post('delete/{id}', [PackagesController::class, 'destroy']);
+});
