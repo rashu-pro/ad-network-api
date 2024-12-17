@@ -31,15 +31,16 @@ Route::prefix('advertiser')->group(function (){
 });
 
 Route::prefix('digital-assets')->group(function () {
-    Route::get('/', [DigitalAssetsController::class, 'index']);
-    Route::get('/{id}', [DigitalAssetsController::class, 'show']);
-    Route::post('/', [DigitalAssetsController::class, 'store']);
-    Route::post('delete/{id}', [DigitalAssetsController::class, 'destroy']);
+    Route::get('/', [DigitalAssetsController::class, 'index'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    Route::get('/{id}', [DigitalAssetsController::class, 'show'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    Route::post('/', [DigitalAssetsController::class, 'store'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    Route::post('delete/{id}', [DigitalAssetsController::class, 'destroy'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
 });
+
 Route::prefix('packages')->group(function () {
-    Route::get('/', [PackagesController::class, 'index']);
-    Route::get('/{id}', [PackagesController::class, 'show']);
-    Route::post('/', [PackagesController::class, 'store']);
-    Route::post('update/{id}', [PackagesController::class, 'update']);
-    Route::post('delete/{id}', [PackagesController::class, 'destroy']);
+    Route::get('/', [PackagesController::class, 'index'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    Route::get('/{id}', [PackagesController::class, 'show'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    Route::post('/', [PackagesController::class, 'store'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    Route::post('update/{id}', [PackagesController::class, 'update'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    Route::post('delete/{id}', [PackagesController::class, 'destroy'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
 });
