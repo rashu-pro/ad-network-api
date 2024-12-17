@@ -13,6 +13,6 @@ class Package extends Model
 
     public function assets()
     {
-        return $this->belongsToMany(DigitalAsset::class,)->using(PackageAsset::class)->withTimestamps();
+        return $this->belongsToMany(DigitalAsset::class,'package_asset')->using(PackageAsset::class)->withTimestamps();
     }
 }
