@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\AdvertiserRegisteredController;
 use App\Http\Controllers\Api\Auth\AdvertiserLoginController;
 use App\Http\Controllers\Api\Auth\PublisherRegisteredController;
+use App\Http\Controllers\Api\Auth\PublisherLoginController;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
@@ -49,4 +50,9 @@ Route::prefix('packages')->group(function () {
 Route::prefix('publisher')->group(function (){
     Route::post('/register', [PublisherRegisteredController::class, 'store'])
         ->middleware('guest');
+    Route::post('/login', [PublisherLoginController::class, 'login']);
+    Route::post('/get-access-token',[PublisherLoginController::class,'refresh']);
+    Route::get('/profile',function (Request $request) {
+        return Auth::guard('publisher')->user();
+    })->middleware(['auth:publisher','abilities:'.TokenAbility::ACCESS_API->value]);
 });
