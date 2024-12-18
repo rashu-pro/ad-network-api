@@ -47,6 +47,10 @@ return [
         'advertiser' => [
             'driver' => 'sanctum',
             'provider' => 'advertisers',
+        ],
+        'publisher' => [
+            'driver' => 'sanctum',
+            'provider' => 'publishers',
         ]
     ],
 
@@ -75,6 +79,10 @@ return [
         'advertisers' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\Advertiser::class),
+        ],
+        'publishers' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\Publisher::class),
         ]
 
         // 'users' => [
@@ -111,6 +119,12 @@ return [
         ],
         'advertisers' => [
             'provider' => 'advertisers',
+            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+        'publishers' => [
+            'provider' => 'publishers',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
             'expire' => 60,
             'throttle' => 60,
