@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -18,15 +17,8 @@ class Advertiser extends Authenticatable
      *
      * @var list<string>
      */
-    protected $fillable = [
-        'advertiser_name',
-        'company_name',
-        'email',
-        'advertiser_phone',
-        'advertiser_website',
-        'address',
-        'note',
-        'password',
+    protected $guarded = [
+        'id', 'created_at', 'updated_at'
     ];
 
     /**
