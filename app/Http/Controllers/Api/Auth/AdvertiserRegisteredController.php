@@ -6,6 +6,7 @@ use App\Events\AdvertiserRegistered;
 use App\Http\Controllers\Controller;
 use App\Models\Advertiser;
 use App\Traits\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -19,11 +20,12 @@ class AdvertiserRegisteredController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        $request->validate([
-            'advertiser_name' => ['required', 'string', 'max:255'],
-            'company_name' => ['string', 'max:255'],
+        $validatedData = $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'business_name' => ['string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.Advertiser::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'advertiser_phone' => ['string', 'max:255'],
@@ -31,15 +33,7 @@ class AdvertiserRegisteredController extends Controller
             'address' => ['string', 'max:255']
         ]);
 
-        $advertiser = Advertiser::create([
-            'advertiser_name' => $request->advertiser_name,
-            'company_name' => $request->company_name,
-            'email' => $request->email,
-            'password' => Hash::make($request->string('password')),
-            'advertiser_phone' => $request->advertiser_phone,
-            'advertiser_website' => $request->advertiser_website,
-            'address' => $request->address
-        ]);
+        $advertiser = Advertiser::create($validatedData);
 
         event(new AdvertiserRegistered($advertiser));
 

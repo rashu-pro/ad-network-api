@@ -25,8 +25,8 @@ class AddAdvertiserToAdServer
 
         // Payload data
         $payload = [
-            'advertiserName' => $advertiserRegistered->advertiser_name,
-            'contactName'    => $advertiserRegistered->advertiser_name,
+            'advertiserName' => $advertiserRegistered->first_name . ' ' . $advertiserRegistered->last_name,
+            'contactName'    => $advertiserRegistered->first_name . ' ' . $advertiserRegistered->last_name,
             'emailAddress'   => $advertiserRegistered->email,
             'username'       => $advertiserRegistered->email,
         ];
@@ -38,7 +38,7 @@ class AddAdvertiserToAdServer
 
         //After the successful response add the advertiser_id into database
         $advertiser = Advertiser::find($advertiserRegistered->id);
-        $advertiser->advertiser_id = $advertiser_id;
+        $advertiser->adserver_id = $advertiser_id;
         $advertiser->save();
     }
 }
