@@ -24,7 +24,6 @@ class CreatePublisherAssetsTable extends Migration
             $table->timestamps();
 
             $table->foreign('publisher_id')->references('id')->on('publishers')->onDelete('cascade');
-            $table->foreign('adserver_id')->references('id')->on('adservers')->onDelete('cascade');
             $table->foreign('asset_id')->references('id')->on('assets')->onDelete('cascade');
         });
     }
