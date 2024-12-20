@@ -32,21 +32,6 @@ Route::prefix('advertiser')->group(function (){
     })->middleware(['auth:advertiser','abilities:'.TokenAbility::ACCESS_API->value]);
 });
 
-Route::prefix('digital-assets')->group(function () {
-    Route::get('/', [DigitalAssetsController::class, 'index'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
-    Route::get('/{id}', [DigitalAssetsController::class, 'show'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
-    Route::post('/', [DigitalAssetsController::class, 'store'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
-    Route::post('delete/{id}', [DigitalAssetsController::class, 'destroy'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
-});
-
-Route::prefix('packages')->group(function () {
-    Route::get('/', [PackagesController::class, 'index'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
-    Route::get('/{id}', [PackagesController::class, 'show'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
-    Route::post('/', [PackagesController::class, 'store'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
-    Route::post('update/{id}', [PackagesController::class, 'update'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
-    Route::post('delete/{id}', [PackagesController::class, 'destroy'])->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
-});
-
 Route::prefix('publisher')->group(function (){
     Route::post('/register', [PublisherRegisteredController::class, 'store'])
         ->middleware('guest');
