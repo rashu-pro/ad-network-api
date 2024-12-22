@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Data\CampaignUpdateData;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
 use App\Repositories\Interfaces\CampaignMappingRepositoryInterface;
 use App\Models\Advertiser;
@@ -54,6 +55,21 @@ class AdvertiserService
     {
         $campaignData = new CampaignData($campaignData);
         return $this->campaignRepository->create((array)$campaignData);
+    }
+
+    /**
+     * Update an existing campaign.
+     *
+     * @param int $id
+     * @param array $campaignData
+     * @return bool
+     * @throws ValidationException
+     */
+    public function updateCampaign(int $id, array $campaignData): bool
+    {
+        $this->campaignRepository->update($id,$campaignData);
+        $this->updateCampaignStatus($id, $campaignData['status']);
+        return true;
     }
 
     /**
@@ -128,6 +144,8 @@ class AdvertiserService
             $campaign->status = $status;
             if ($campaign->status !== CampaignStatus::DRAFT) {
                 $campaign->is_draft = false;
+            }else{
+                $campaign->is_draft = true;
             }
             return $campaign->save();
         }

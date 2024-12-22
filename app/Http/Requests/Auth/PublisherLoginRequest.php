@@ -56,7 +56,7 @@ class PublisherLoginRequest extends FormRequest
 
          $user = Publisher::where('email', $this->email)->first();
 
-        if (!$user || !$response->successful()) {
+        if (!$user) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

@@ -35,7 +35,7 @@ class AdvertiserRegisteredController extends Controller
 
         $advertiser = Advertiser::create($validatedData);
 
-        event(new AdvertiserRegistered($advertiser));
+//        event(new AdvertiserRegistered($advertiser));
 
         // Auth::login($user);
 

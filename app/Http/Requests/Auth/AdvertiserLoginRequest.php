@@ -30,7 +30,7 @@ class AdvertiserLoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email','exists:users,email'],
+            'email' => ['required', 'string', 'email','exists:advertisers,email'],
             'password' => ['required', 'string'],
         ];
     }
