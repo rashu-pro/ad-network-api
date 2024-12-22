@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Data\AssetData;
+use App\Data\AssetValuationsData;
+use App\Repositories\Interfaces\AssetValuationRepositoryInterface;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
 use App\Repositories\Interfaces\AssetRepositoryInterface;
 use Illuminate\Support\Collection;
@@ -13,13 +15,16 @@ class AdminService
 {
     protected $campaignRepository;
     protected $assetRepository;
+    protected $asstValutionRepository;
 
     public function __construct(
         CampaignRepositoryInterface $campaignRepository,
         AssetRepositoryInterface $assetRepository,
+        AssetValuationRepositoryInterface $assetValuationRepository,
     ) {
         $this->campaignRepository = $campaignRepository;
         $this->assetRepository = $assetRepository;
+        $this->asstValutionRepository = $assetValuationRepository;
     }
 
     /**
@@ -81,6 +86,17 @@ class AdminService
     {
         $assetData = new AssetData($assetData);
         return $this->assetRepository->create((array)$assetData);
+    }
+
+    /**
+     * @param array $assetData
+     * @return Model
+     * @throws ValidationException
+     */
+    public function createAssetValuation(array $data): Model
+    {
+        $data = new AssetValuationsData($data);
+        return $this->asstValutionRepository->create((array)$data);
     }
 
     public function deleteAsset(int $id)

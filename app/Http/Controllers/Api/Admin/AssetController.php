@@ -52,6 +52,15 @@ class AssetController extends Controller
                 'name', 'type', 'is_active'
             ]);
             $asset = $this->adminService->createAsset($data);
+            $data = [
+                'asset_id' => $asset->id,
+                'has_url' => $request->has_url,
+                'min_population' => $request->min_population,
+                'max_population' => $request->max_population,
+                'min_duration_in_hour' => $request->min_duration_in_hour,
+                'max_price_per_hour' => $request->max_price_per_hour
+            ];
+            $assetValuation = $this->adminService->createAssetValuation($data);
             return $this->successResponse('Asset created successfully', (array)$asset);
         }catch (Exception $e){
             return $this->errorResponse($e->getMessage());
