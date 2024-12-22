@@ -30,6 +30,6 @@ class Asset extends Model
      */
     public function publishers() : HasMany
     {
-        return $this->hasMany(PublisherAssets::class, 'asset_id', 'id');
+        return $this->hasMany(PublisherAsset::class, 'asset_id', 'id');
     }
 }

@@ -34,11 +34,6 @@ class PublisherService
         // Logic to validate asset
     }
 
-    public function enterAssetDetails(string $url, int $minDuration, float $unitPrice, AssetValuation $validationResponse)
-    {
-        // Logic to enter asset details
-    }
-
     public function viewPaidCampaigns(): Collection
     {
         // Logic to view paid campaigns

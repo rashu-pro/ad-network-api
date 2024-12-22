@@ -35,6 +35,6 @@ class Publisher extends Authenticatable
      */
     public function assets() : HasMany
     {
-        return $this->hasMany(PublisherAssets::class);
+        return $this->hasMany(PublisherAsset::class);
     }
 }

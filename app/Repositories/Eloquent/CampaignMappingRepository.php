@@ -5,7 +5,7 @@ namespace App\Repositories\Eloquent;
 use App\Models\CampaignMapping;
 use App\Repositories\BaseRepository;
 use App\Repositories\Interfaces\CampaignMappingRepositoryInterface;
-use \Illuminate\Database\Eloquent\Collection;
+
 class CampaignMappingRepository extends BaseRepository implements CampaignMappingRepositoryInterface {
 
     /**
@@ -95,11 +95,21 @@ class CampaignMappingRepository extends BaseRepository implements CampaignMappin
      * Find campaign mappings by campaign ID.
      *
      * @param int $campaignId
-     * @return Collection
+     * @return \Illuminate\Support\Collection
      */
-    public function findByCampaignId(int $campaignId): Collection
+    public function findByCampaignId(int $campaignId): \Illuminate\Support\Collection
     {
         return $this->model->where('campaign_id', $campaignId)->get();
+    }
+    /**
+     * Find publisher mappings by publisher ID.
+     *
+     * @param int $campaignId
+     * @return \Illuminate\Support\Collection
+     */
+    public function findByPublisherId(int $publisherId): \Illuminate\Support\Collection
+    {
+        return $this->model->where('publisher_id', $publisherId)->groupBy('campaign_id')->get();
     }
 }
 

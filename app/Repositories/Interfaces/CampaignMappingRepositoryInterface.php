@@ -3,7 +3,9 @@
 namespace App\Repositories\Interfaces;
 
 
-use Illuminate\Database\Eloquent\Collection;
+
+
+use Illuminate\Support\Collection;
 
 interface CampaignMappingRepositoryInterface extends BaseRepositoryInterface {
     /**
@@ -48,4 +50,11 @@ interface CampaignMappingRepositoryInterface extends BaseRepositoryInterface {
      * @return Collection
      */
     public function findByCampaignId(int $campaignId): Collection;
+    /**
+     * Find campaign mappings by publisher ID.
+     *
+     * @param int $campaignId
+     * @return Collection
+     */
+    public function findByPublisherId(int $campaignId): Collection;
 }

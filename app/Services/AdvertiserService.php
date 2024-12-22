@@ -2,19 +2,16 @@
 
 namespace App\Services;
 
-use App\Repositories\Interfaces\AdvertiserRepositoryInterface;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
 use App\Repositories\Interfaces\CampaignMappingRepositoryInterface;
-use App\Repositories\Interfaces\TransactionRepositoryInterface;
 use App\Models\Advertiser;
-use App\Models\Campaign;
 use App\Models\Transaction;
 use App\Data\CampaignData;
 use App\Data\CampaignMappingData;
 use App\Enums\CampaignStatus;
 use App\Enums\PaymentStatus;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class AdvertiserService
@@ -129,6 +126,9 @@ class AdvertiserService
         $campaign = $this->campaignRepository->find($campaignId);
         if ($campaign) {
             $campaign->status = $status;
+            if ($campaign->status !== CampaignStatus::DRAFT) {
+                $campaign->is_draft = false;
+            }
             return $campaign->save();
         }
         return false;
@@ -146,8 +146,7 @@ class AdvertiserService
     {
         $campaign = $this->campaignRepository->find($campaignId);
 
-        if (!$campaign || ($campaign->payment_status !== PaymentStatus::PENDING)
-            || ($campaign->payment_status !== PaymentStatus::FAILED)) {
+        if (!$campaign || ($campaign->payment_status === PaymentStatus::PAID->value)) {
             throw new \InvalidArgumentException('Campaign is already paid.');
         }
 
@@ -201,5 +200,11 @@ class AdvertiserService
             return $campaign->save();
         }
         return false;
+    }
+
+    public function allCampaigns(int $advertiserId) : Collection
+    {
+        $campaigns = $this->campaignRepository->allAdvertiserCampaigns($advertiserId);
+        return $campaigns;
     }
 }

@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PublisherAssets extends Model
+class PublisherAsset extends Model
 {
     use HasFactory;
 
@@ -30,6 +30,11 @@ class PublisherAssets extends Model
         return $this->belongsTo(Publisher::class);
     }
 
+    /**
+     * The asset that belongs to the publisher.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function asset()
     {
         return $this->belongsTo(Asset::class);

@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquent;
 use App\Models\Campaign;
 use App\Repositories\BaseRepository;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 
 class CampaignRepository extends BaseRepository implements CampaignRepositoryInterface {
     /**
@@ -31,6 +32,11 @@ class CampaignRepository extends BaseRepository implements CampaignRepositoryInt
 
         $campaign->is_draft = false;
         return $campaign->save();
+    }
+
+    public function allAdvertiserCampaigns(int $advertiserId): Collection
+    {
+        return $this->model->where('advertiser_id', $advertiserId)->get();
     }
 }
 
