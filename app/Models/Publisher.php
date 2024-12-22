@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use \Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\HasLocation;
 
 class Publisher extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens, HasLocation;
 
     protected $guarded = [
         'id', 'created_at', 'updated_at'
@@ -25,4 +27,14 @@ class Publisher extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    /**
+     * The assets that belong to the Publisher
+     *
+     * @return HasMany
+     */
+    public function assets() : HasMany
+    {
+        return $this->hasMany(PublisherAsset::class);
+    }
 }

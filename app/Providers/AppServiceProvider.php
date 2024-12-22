@@ -2,6 +2,14 @@
 
 namespace App\Providers;
 
+use App\Repositories\Eloquent\AssetRepository;
+use App\Repositories\Eloquent\AssetValuationRepository;
+use App\Repositories\Eloquent\CampaignMappingRepository;
+use App\Repositories\Eloquent\CampaignRepository;
+use App\Repositories\Interfaces\AssetRepositoryInterface;
+use App\Repositories\Interfaces\AssetValuationRepositoryInterface;
+use App\Repositories\Interfaces\CampaignMappingRepositoryInterface;
+use App\Repositories\Interfaces\CampaignRepositoryInterface;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 
@@ -12,7 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(AssetRepositoryInterface::class, AssetRepository::class);
+        $this->app->bind(AssetValuationRepositoryInterface::class, AssetValuationRepository::class);
+        $this->app->bind(CampaignRepositoryInterface::class, CampaignRepository::class);
+        $this->app->bind(CampaignMappingRepositoryInterface::class, CampaignMappingRepository::class);
     }
 
     /**
