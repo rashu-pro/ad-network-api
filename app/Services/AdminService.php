@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Data\AssetData;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
 use App\Repositories\Interfaces\AssetRepositoryInterface;
 use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class AdminService
 {
@@ -59,6 +62,17 @@ class AdminService
     public function viewAllAssets(): Collection
     {
         return $this->assetRepository->all();
+    }
+
+    /**
+     * @param array $assetData
+     * @return Model
+     * @throws ValidationException
+     */
+    public function createAsset(array $assetData): Model
+    {
+        $assetData = new AssetData($assetData);
+        return $this->assetRepository->create((array)$assetData);
     }
 
     /**

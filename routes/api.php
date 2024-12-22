@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Auth\AdvertiserRegisteredController;
 use App\Http\Controllers\Api\Auth\AdvertiserLoginController;
 use App\Http\Controllers\Api\Auth\PublisherRegisteredController;
 use App\Http\Controllers\Api\Auth\PublisherLoginController;
+use App\Http\Controllers\Api\Admin\AssetController;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
@@ -21,6 +22,8 @@ Route::prefix('admin')->group(function () {
     Route::get('/profile',function (Request $request) {
         return Auth::guard('admin')->user();
     })->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    Route::post('/assets/add', [AssetController::class, 'createAsset'])
+        ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
 });
 Route::prefix('advertiser')->group(function (){
     Route::post('/register', [AdvertiserRegisteredController::class, 'store'])
