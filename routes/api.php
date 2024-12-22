@@ -26,6 +26,8 @@ Route::prefix('admin')->group(function () {
         ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
     Route::post('/assets/add', [AssetController::class, 'createAsset'])
         ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    Route::post('/assets/delete/{id}', [AssetController::class, 'deleteAsset'])
+        ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
 });
 Route::prefix('advertiser')->group(function (){
     Route::post('/register', [AdvertiserRegisteredController::class, 'store'])

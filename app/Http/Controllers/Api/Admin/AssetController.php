@@ -32,6 +32,9 @@ class AssetController extends Controller
         return $this->successResponse('All the asset list', (array)$allAssets);
     }
 
+    /**
+     * @return JsonResponse
+     */
     public function allActiveAssets(): JsonResponse
     {
         $allAssets = $this->adminService->viewAllActiveAssets();
@@ -50,6 +53,16 @@ class AssetController extends Controller
             ]);
             $asset = $this->adminService->createAsset($data);
             return $this->successResponse('Asset created successfully', (array)$asset);
+        }catch (Exception $e){
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    public function deleteAsset(int $id): JsonResponse
+    {
+        try{
+            $status = $this->adminService->deleteAsset($id);
+            return $this->successResponse('Asset deleted successfully', (array)$status);
         }catch (Exception $e){
             return $this->errorResponse($e->getMessage());
         }

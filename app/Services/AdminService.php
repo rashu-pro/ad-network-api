@@ -85,7 +85,7 @@ class AdminService
 
     public function deleteAsset(int $id)
     {
-//        $asset =
+        return $this->assetRepository->delete($id);
     }
 
     /**
