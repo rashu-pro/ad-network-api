@@ -22,6 +22,8 @@ Route::prefix('admin')->group(function () {
     })->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
     Route::get('/assets', [AssetController::class, 'allAssets'])
         ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    Route::get('/assets/active', [AssetController::class, 'allActiveAssets'])
+        ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
     Route::post('/assets/add', [AssetController::class, 'createAsset'])
         ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
 });

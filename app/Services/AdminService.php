@@ -65,6 +65,14 @@ class AdminService
     }
 
     /**
+     * @return Collection
+     */
+    public function viewAllActiveAssets(): Collection
+    {
+        return $this->assetRepository->getActiveAssets();
+    }
+
+    /**
      * @param array $assetData
      * @return Model
      * @throws ValidationException
@@ -73,6 +81,11 @@ class AdminService
     {
         $assetData = new AssetData($assetData);
         return $this->assetRepository->create((array)$assetData);
+    }
+
+    public function deleteAsset(int $id)
+    {
+//        $asset =
     }
 
     /**
