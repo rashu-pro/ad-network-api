@@ -2,8 +2,6 @@
 
 use App\Enums\TokenAbility;
 use App\Http\Controllers\Api\Auth\AdminLoginController;
-use App\Http\Controllers\Api\DigitalAssetsController;
-use App\Http\Controllers\Api\PackagesController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +20,8 @@ Route::prefix('admin')->group(function () {
     Route::get('/profile',function (Request $request) {
         return Auth::guard('admin')->user();
     })->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    Route::get('/assets', [AssetController::class, 'allAssets'])
+        ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
     Route::post('/assets/add', [AssetController::class, 'createAsset'])
         ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
 });

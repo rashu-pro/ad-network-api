@@ -28,7 +28,8 @@ class AssetController extends Controller
      */
     public function allAssets(): JsonResponse
     {
-        return $this->successResponse('All the asset list', $this->adminService->viewAllAssets());
+        $allAssets = $this->adminService->viewAllAssets();
+        return $this->successResponse('All the asset list', (array)$allAssets);
     }
 
     /**
