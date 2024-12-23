@@ -53,4 +53,5 @@ Route::prefix('publisher')->group(function (){
     Route::post('/set-asset',[\App\Http\Controllers\Api\PublisherOtpController::class,'setAsset'])->middleware('auth:publisher');
     Route::get('/assets',[\App\Http\Controllers\Api\PublisherOtpController::class,'assets'])->middleware('auth:publisher');
     Route::get('/campaigns',[\App\Http\Controllers\Api\PublisherOtpController::class,'allCampaigns'])->middleware('auth:publisher');
+    Route::get('/available-zones/{asset_id}', [\App\Http\Controllers\Api\PublisherOtpController::class,'availableZones'])->middleware('auth:publisher');
 });

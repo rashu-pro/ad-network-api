@@ -11,13 +11,8 @@ class PublisherAsset extends Model
 
     protected $table = 'publisher_assets';
 
-    protected $fillable = [
-        'publisher_id',
-        'publisher_adserver_id',
-        'asset_id',
-        'url',
-        'min_duration_in_hour',
-        'price_per_hour',
+    protected $guarded = [
+        'id', 'created_at', 'updated_at'
     ];
 
     /**
@@ -38,5 +33,10 @@ class PublisherAsset extends Model
     public function asset()
     {
         return $this->belongsTo(Asset::class);
+    }
+
+    public function zone()
+    {
+        return $this->belongsTo(Zone::class);
     }
 }

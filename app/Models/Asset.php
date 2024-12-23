@@ -32,4 +32,12 @@ class Asset extends Model
     {
         return $this->hasMany(PublisherAsset::class, 'asset_id', 'id');
     }
+
+    /**
+     * @return HasMany
+     */
+    public function zones(): HasMany
+    {
+        return $this->hasMany(Zone::class, 'asset_id', 'id');
+    }
 }

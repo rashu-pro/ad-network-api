@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\CampaignStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AssetZoneResource;
 use App\Http\Resources\CampaignResource;
 use App\Http\Resources\PublisherAssetResource;
 use App\Models\Campaign;
@@ -42,6 +43,7 @@ class PublisherOtpController extends Controller
     {
         $request->validate([
             'asset_id' => 'required|integer|exists:assets,id',
+            'zone_id' => 'required|integer|exists:zones,id',
             'min_population' => 'required|integer',
             'max_population' => 'nullable|integer',
             'min_duration_in_hour' => 'required|numeric',
@@ -49,9 +51,11 @@ class PublisherOtpController extends Controller
             'url' => 'nullable|string',
         ]);
         $user = Auth::guard('publisher')->user();
-        $data = $request->only(['asset_id','min_duration_in_hour','price_per_hour','url']);
+        $data = $request->only(['asset_id','min_duration_in_hour','price_per_hour','url', 'zone_id']);
         $validator = $this->asrv->validateAsset($request->asset_id,$request->min_population,$request->max_population ?? null);
         $asset = $this->asr->find($data['asset_id']);
+        $zone = $asset->zones->where('id', $request->zone_id)->firstOrFail();
+
         if($asset->type == 'online' && (!$request->has('url') || $request->get('url') == null)){
             return $this->errorResponse(message: 'Url is required for online asset',status: 422);
         }
@@ -78,8 +82,22 @@ class PublisherOtpController extends Controller
         $endpoint = env('AD_SERVER_BASE_URL').'/pub/new';
         $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint, $payload);
         $publisher_adserver_id = $response->object()->publisherId;
-
         $data['publisher_adserver_id'] = $publisher_adserver_id;
+
+        // Payload data
+        $payload = [
+            'publisherId' => $publisher_adserver_id,
+            'zoneName' => $zone->zone_name,
+            'type' => 0,
+            'width' => $zone->width,
+            'height' => $zone->height,
+        ];
+
+        // Send GET request with Basic Auth
+        $endpoint = env('AD_SERVER_BASE_URL').'/zon/new';
+        $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint, $payload);
+        $zone_adserver_id = $response->object()->zoneId;
+        $data['zone_adserver_id'] = $zone_adserver_id;
 
         $publisherAsset = $user->assets()->create($data);
         return $this->successResponse(message: "Asset added to the publisher",data: (array)$publisherAsset);
@@ -105,5 +123,11 @@ class PublisherOtpController extends Controller
         $user = Auth::guard('publisher')->user();
         $mappings = CampaignMapping::where('publisher_id',$user->id)->pluck('campaign_id')->toArray();
         return $this->successResponse('All campaigns',CampaignResource::collection(Campaign::whereIn('id',$mappings)->where('is_draft',false)->get()));
+    }
+
+    public function availableZones($asset_id)
+    {
+        $zones = $this->asr->find($asset_id)->zones()->get();
+        return $this->successResponse('Available zones', AssetZoneResource::collection($zones));
     }
 }
