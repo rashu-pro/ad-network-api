@@ -16,6 +16,7 @@ use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 
 class PublisherOtpController extends Controller
 {
@@ -63,6 +64,23 @@ class PublisherOtpController extends Controller
         if($validator->min_duration_in_hour > $request->min_duration_in_hour){
             return $this->errorResponse('Duration is not acceptable for the mentioned population');
         }
+
+        // Payload data
+        $payload = [
+            'agencyId' => 1,
+            'publisherName' => $data['url'],
+            'website' => $data['url'],
+            'contactName' => $user->name,
+            'emailAddress' => $user->email,
+        ];
+
+        // Send GET request with Basic Auth
+        $endpoint = env('AD_SERVER_BASE_URL').'/pub/new';
+        $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint, $payload);
+        $publisher_adserver_id = $response->object()->publisherId;
+
+        $data['publisher_adserver_id'] = $publisher_adserver_id;
+
         $publisherAsset = $user->assets()->create($data);
         return $this->successResponse(message: "Asset added to the publisher",data: (array)$publisherAsset);
     }
