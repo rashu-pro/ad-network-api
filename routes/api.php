@@ -2,15 +2,14 @@
 
 use App\Enums\TokenAbility;
 use App\Http\Controllers\Api\Auth\AdminLoginController;
-use App\Http\Controllers\Api\Auth\AdvertiserLoginController;
-use App\Http\Controllers\Api\Auth\AdvertiserRegisteredController;
-use App\Http\Controllers\Api\Auth\PublisherLoginController;
-use App\Http\Controllers\Api\Auth\PublisherRegisteredController;
-use App\Http\Controllers\Api\DigitalAssetsController;
-use App\Http\Controllers\Api\PackagesController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\Auth\AdvertiserRegisteredController;
+use App\Http\Controllers\Api\Auth\AdvertiserLoginController;
+use App\Http\Controllers\Api\Auth\PublisherRegisteredController;
+use App\Http\Controllers\Api\Auth\PublisherLoginController;
+use App\Http\Controllers\Api\Admin\AssetController;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
@@ -21,6 +20,14 @@ Route::prefix('admin')->group(function () {
     Route::get('/profile',function (Request $request) {
         return Auth::guard('admin')->user();
     })->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    Route::get('/assets', [AssetController::class, 'allAssets'])
+        ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    Route::get('/assets/active', [AssetController::class, 'allActiveAssets'])
+        ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    Route::post('/assets/add', [AssetController::class, 'createAsset'])
+        ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    Route::post('/assets/delete/{id}', [AssetController::class, 'deleteAsset'])
+        ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
 });
 Route::prefix('advertiser')->group(function (){
     Route::post('/register', [AdvertiserRegisteredController::class, 'store'])
