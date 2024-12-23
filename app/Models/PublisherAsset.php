@@ -13,7 +13,7 @@ class PublisherAsset extends Model
 
     protected $fillable = [
         'publisher_id',
-        'adserver_id',
+        'publisher_adserver_id',
         'asset_id',
         'url',
         'min_duration_in_hour',
