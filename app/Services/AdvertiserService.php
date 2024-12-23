@@ -67,7 +67,7 @@ class AdvertiserService
      */
     public function updateCampaign(int $id, array $campaignData): bool
     {
-        $this->campaignRepository->update($id,$campaignData);
+//        $this->campaignRepository->update($id,$campaignData);
         $this->updateCampaignStatus($id, $campaignData['status']);
         return true;
     }
@@ -135,8 +135,8 @@ class AdvertiserService
      */
     public function updateCampaignStatus(int $campaignId, string $status): bool
     {
-        if (!in_array($status, [CampaignStatus::DRAFT->value, CampaignStatus::PENDING->value])) {
-            throw new \InvalidArgumentException('Invalid status. Status can only be draft or pending.');
+        if (!in_array($status, [CampaignStatus::DRAFT->value, CampaignStatus::PUBLISH->value])) {
+            throw new \InvalidArgumentException('Invalid status. Status can only be draft or publish.');
         }
 
         $campaign = $this->campaignRepository->find($campaignId);

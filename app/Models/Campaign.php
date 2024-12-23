@@ -8,10 +8,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Enums\PaymentStatus;
 use App\Enums\CampaignStatus;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Campaign extends Model
+class Campaign extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
     protected $fillable = [
         'advertiser_id',
@@ -32,15 +34,6 @@ class Campaign extends Model
         'status' => CampaignStatus::class,
     ];
 
-    /**
-     * Get the adserver that owns the campaign.
-     *
-     * @return BelongsTo
-     */
-    public function adserver(): BelongsTo
-    {
-        return $this->belongsTo(Adserver::class);
-    }
 
     /**
      * Get the transactions for the campaign.
@@ -65,6 +58,11 @@ class Campaign extends Model
     public function mappings()
     {
         return $this->hasMany(CampaignMapping::class);
+    }
+
+    public function advertiser(): BelongsTo
+    {
+        return $this->belongsTo(Advertiser::class, 'advertiser_id', 'id');
     }
 
 }

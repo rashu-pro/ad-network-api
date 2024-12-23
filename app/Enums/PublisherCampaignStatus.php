@@ -2,10 +2,9 @@
 
 namespace App\Enums;
 
-enum CampaignStatus: string
+enum PublisherCampaignStatus: string
 {
-    case DRAFT = 'draft';
-    case PUBLISH = 'publish';
+    case PENDING = 'pending';
     case APPROVE = 'approve';
     case CONDITIONALLY_APPROVE = 'conditionally_approve';
     case CONDITIONALLY_REJECT = 'conditionally_reject';

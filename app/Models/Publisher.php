@@ -39,13 +39,4 @@ class Publisher extends Authenticatable implements HasMedia
     {
         return $this->hasMany(PublisherAsset::class);
     }
-
-    public function registerMediaCollections(): void
-    {
-
-        $this
-            ->addMediaCollection('banner')
-            ->useDisk('public')
-            ->acceptsMimeTypes(['image/jpeg','image/jpg','image/png']);
-    }
 }

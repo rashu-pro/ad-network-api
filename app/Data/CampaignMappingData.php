@@ -2,10 +2,11 @@
 
 namespace App\Data;
 
+use AllowDynamicProperties;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
-class CampaignMappingData
+#[AllowDynamicProperties] class CampaignMappingData
 {
     public int $campaign_id;
     public int $publisher_id;
@@ -33,6 +34,8 @@ class CampaignMappingData
             'publisher_asset_id' => 'required|integer',
             'start_date' => 'required|date',
             'end_date' => 'required|date',
+            'publisher_zone_id' => 'required|integer|exists:publisher_assets,zone_id',
+            'publisher_zone_adserver_id' => 'required|integer|exists:publisher_assets,zone_adserver_id',
         ]);
 
         if ($validator->fails()) {
@@ -46,6 +49,8 @@ class CampaignMappingData
         $this->start_date = $data['start_date'];
         $this->end_date = $data['end_date'];
         $this->calculated_price = $data['calculated_price'];
+        $this->publisher_zone_id = $data['publisher_zone_id'];
+        $this->publisher_zone_adserver_id = $data['publisher_zone_adserver_id'];
         $this->is_active = (bool)$data['is_active'] ?? false;
     }
 }
