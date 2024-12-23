@@ -81,6 +81,20 @@ class AdvertiserOptController extends Controller
         }
     }
 
+    public function uploadCampaign($id, Request $request)
+    {
+        try{
+            $request->validate([
+                'banner' => 'required|file|mimes:jpg,jpeg,png'
+            ]);
+            $campaign = Campaign::with()->findOrFail($id);
+            $zones = $campaign->
+            $campaign->addMedia($request->banner)->toMediaCollection('banner');
+        }catch (\Exception $e){
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
     public function updateCampaign($id, Request $request)
     {
 
