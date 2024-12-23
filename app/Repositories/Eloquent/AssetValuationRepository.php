@@ -30,9 +30,11 @@ class AssetValuationRepository extends BaseRepository implements AssetValuationR
         return $this->model
             ->where('asset_id', $assetId)
             ->where('min_population', '<=', $minPopulation)
-            ->where(function ($query) use ($maxPopulation) {
-                $query->where('max_population', '>=', $maxPopulation)
-                      ->orWhereNull('max_population');
+            ->when($maxPopulation, function ($query, $maxPopulation) {
+                $query->where(function ($query) use ($maxPopulation) {
+                    $query->where('max_population', '>=', $maxPopulation)
+                        ->orWhereNull('max_population');
+                });
             })
             ->orderBy('min_population', 'desc')
             ->first();

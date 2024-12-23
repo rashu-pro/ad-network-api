@@ -9,4 +9,6 @@ interface AssetRepositoryInterface extends BaseRepositoryInterface {
      * @return \Illuminate\Support\Collection
      */
     public function getActiveAssets(): \Illuminate\Support\Collection;
+
+    public function setPublisherAssets($assetId, $publisherId) : bool;
 }

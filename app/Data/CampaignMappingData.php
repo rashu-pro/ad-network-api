@@ -28,12 +28,11 @@ class CampaignMappingData
     {
         $validator = Validator::make($data, [
             'campaign_id' => 'required|integer',
+            'advertiser_id' => 'required|integer',
             'publisher_id' => 'required|integer',
             'publisher_asset_id' => 'required|integer',
             'start_date' => 'required|date',
             'end_date' => 'required|date',
-            'calculated_price' => 'required|numeric',
-            'is_active' => 'required|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -41,11 +40,12 @@ class CampaignMappingData
         }
 
         $this->campaign_id = $data['campaign_id'];
+        $this->advertiser_id = $data['advertiser_id'];
         $this->publisher_id = $data['publisher_id'];
         $this->publisher_asset_id = $data['publisher_asset_id'];
         $this->start_date = $data['start_date'];
         $this->end_date = $data['end_date'];
         $this->calculated_price = $data['calculated_price'];
-        $this->is_active = $data['is_active'];
+        $this->is_active = (bool)$data['is_active'] ?? false;
     }
 }

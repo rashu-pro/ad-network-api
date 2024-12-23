@@ -14,13 +14,16 @@ class Campaign extends Model
     use HasFactory;
 
     protected $fillable = [
-        'adserver_id',
+        'advertiser_id',
+        'advertiser_adserver_id',
         'campaign_name',
         'target_url',
         'payment_status',
         'status',
         'note',
         'is_draft',
+        'start_date',
+        'end_date'
     ];
 
     protected $casts = [
@@ -58,4 +61,10 @@ class Campaign extends Model
     {
         return $this->hasMany(CampaignMapping::class);
     }
+
+    public function mappings()
+    {
+        return $this->hasMany(CampaignMapping::class);
+    }
+
 }
