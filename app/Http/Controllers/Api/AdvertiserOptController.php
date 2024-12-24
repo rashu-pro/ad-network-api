@@ -7,12 +7,16 @@ use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CampaignResource;
 use App\Models\Campaign;
+use App\Models\CampaignMapping;
 use App\Models\Publisher;
+use App\Models\Zone;
 use App\Services\AdvertiserService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class AdvertiserOptController extends Controller
 {
@@ -63,6 +67,8 @@ class AdvertiserOptController extends Controller
                             'advertiser_id' => $user->id,
                             'publisher_id' => $publisher->id,
                             'publisher_asset_id' => $asset->id,
+                            'publisher_zone_id' => $asset->zone_id,
+                            'publisher_zone_adserver_id' => $asset->zone_adserver_id,
                             'start_date' => $request->start_date,
                             'end_date' => $request->end_date,
                             'calculated_price' => $calculatedPrice,
@@ -74,11 +80,47 @@ class AdvertiserOptController extends Controller
                 ->toArray(); // Convert to a plain array
             $this->advertiserService->selectPublishers($campaign->id,$publishersData);
 
-
             return $this->successResponse(message: 'created successfully', data: new CampaignResource($campaign));
         }catch (\Exception $e){
             return $this->errorResponse($e->getMessage(),$e->getTrace());
         }
+    }
+
+    public function uploadCampaign($id, Request $request)
+    {
+        $request->validate([
+            'banner' => 'required|file|mimes:jpg,jpeg,png',
+            'publisher_id' => 'required|integer|exists:publishers,id',
+            'publisher_asset_id' => 'required|integer|exists:publisher_assets,id',
+            'zone_id' => 'required|integer|exists:publisher_assets,zone_id',
+        ]);
+        $campaign = Campaign::findOrFail($id);
+        $mapping = $campaign->mappings()->where('publisher_id',$request->publisher_id)
+            ->where('publisher_asset_id',$request->publisher_asset_id)
+            ->where('publisher_zone_id',$request->zone_id)
+            ->firstOrFail();
+        $zone = $mapping->publisherZone;
+
+        $validator = Validator::make($request->all(), [
+            'banner' => 'required|file|mimes:jpg,jpeg,png|dimensions:width=' . $zone->width . ',height=' . $zone->height,
+        ]);
+
+        if ($validator->fails()) {
+            throw new ValidationException($validator,'Invalid data',$validator->errors());
+        }
+        if($campaign->hasMedia('banner')){
+            $campaign->clearMediaCollection('banner');
+        }
+
+        $mapping->addMedia($request->banner)
+            ->withCustomProperties([
+                'publisher_zone_id' => $mapping->publisher_zone_id,
+                'publisher_zone_adserver_id' => $mapping->publisher_zone_adserver_id,
+            ])
+            ->toMediaCollection('banner');
+        return $this->successResponse(message: 'uploaded successfully', data: [
+            'url' => $mapping->getFirstMedia('banner')->getUrl(),
+        ]);
     }
 
     public function updateCampaign($id, Request $request)

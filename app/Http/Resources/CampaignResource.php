@@ -38,6 +38,9 @@ class CampaignResource extends JsonResource
                             'calculated_price' => $mapping->calculated_price,
                             'start_date' => $mapping->start_date,
                             'end_date' => $mapping->end_date,
+                            'zone_id' => $mapping->publisher_zone_id,
+                            'zone_adserver_id' => $mapping->publisher_zone_adserver_id,
+                            'banner' => $mapping->hasMedia('banner') ? $mapping->getFirstMedia('banner')->getUrl() : '#'
                         ];
                     })->toArray(),
                 ];

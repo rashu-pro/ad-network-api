@@ -19,7 +19,7 @@ class CreateCampaignsTable extends Migration
             $table->string('campaign_name');
             $table->string('target_url')->nullable();
             $table->enum('payment_status', ['pending', 'paid', 'failed']);
-            $table->enum('status', ['draft','pending', 'approve', 'conditionally_approve', 'conditionally_reject'])->default('draft');
+            $table->enum('status', ['draft','publish', 'approve', 'conditionally_approve', 'conditionally_reject'])->default('draft');
             $table->text('note')->nullable();
             $table->boolean('is_draft')->default(true);
             $table->timestamps();

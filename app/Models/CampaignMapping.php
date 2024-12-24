@@ -2,29 +2,26 @@
 
 namespace App\Models;
 
+use App\Enums\PublisherCampaignStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class CampaignMapping extends Model
+class CampaignMapping extends Model implements HasMedia
 {
-    use HasFactory;
+    use HasFactory, InteractsWithMedia;
 
-    protected $fillable = [
-        'advertiser_id',
-        'campaign_id',
-        'publisher_id',
-        'publisher_asset_id',
-        'start_date',
-        'end_date',
-        'calculated_price',
-        'is_active',
+    protected $guarded =[
+        'id', 'created_at', 'updated_at'
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'start_date' => 'datetime',
         'end_date' => 'datetime',
+        'status' => PublisherCampaignStatus::class,
     ];
 
     /**
@@ -65,5 +62,19 @@ class CampaignMapping extends Model
     public function publisherAsset(): BelongsTo
     {
         return $this->belongsTo(PublisherAsset::class);
+    }
+
+    public function publisherZone(): BelongsTo
+    {
+        return $this->belongsTo(Zone::class, 'publisher_zone_id', 'id');
+    }
+
+    public function registerMediaCollections(): void
+    {
+
+        $this
+            ->addMediaCollection('banner')
+            ->useDisk('public')
+            ->acceptsMimeTypes(['image/jpeg','image/jpg','image/png']);
     }
 }

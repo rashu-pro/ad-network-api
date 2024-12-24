@@ -8,11 +8,13 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use \Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Traits\HasLocation;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Publisher extends Authenticatable
+class Publisher extends Authenticatable implements HasMedia
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens, HasLocation;
+    use HasFactory, Notifiable, HasApiTokens, HasLocation, InteractsWithMedia;
 
     protected $guarded = [
         'id', 'created_at', 'updated_at'
