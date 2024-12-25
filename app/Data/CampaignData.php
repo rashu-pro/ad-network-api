@@ -33,7 +33,7 @@ class CampaignData
     {
         $validator = Validator::make($data, [
             'advertiser_id' => 'required|integer|exists:advertisers,id',
-            'advertiser_adserver_id' => 'nullable|string',
+            'advertiser_adserver_id' => 'nullable|integer',
             'campaign_name' => 'required|string|max:255',
             'target_url' => 'nullable|string|max:255',
             'payment_status' => 'nullable|in:' . implode(',', PaymentStatus::values()),
