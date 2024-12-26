@@ -74,4 +74,12 @@ return Application::configure(basePath: dirname(__DIR__))
                ],500);
            }
         });
+        $exceptions->render(function(\Illuminate\Database\Eloquent\ModelNotFoundException $e,Request $request) {
+           if ($request->is('api/*')) {
+               return response()->json([
+                   'success' => false,
+                   'message' => "Resource not found."
+               ],404);
+           }
+        });
     })->create();

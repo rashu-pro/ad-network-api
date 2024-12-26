@@ -18,6 +18,7 @@ class CampaignResource extends JsonResource
             'campaign' => [
                 'id' => $this->id,
                 'name' => $this->campaign_name,
+                'advertiser_adserver_id' => $this->advertiser_adserver_id,
                 'status' => $this->status,
                 'is_draft' => $this->is_draft,
             ],
@@ -40,6 +41,10 @@ class CampaignResource extends JsonResource
                             'end_date' => $mapping->end_date,
                             'zone_id' => $mapping->publisher_zone_id,
                             'zone_adserver_id' => $mapping->publisher_zone_adserver_id,
+                            'campaign_adserver_id' => $mapping->campaign_adserver_id,
+                            'url' => $mapping->publisherAsset->url,
+                            'target_url' => $mapping->campaign->target_url,
+                            'is_active' => $mapping->is_active,
                             'banner' => $mapping->hasMedia('banner') ? $mapping->getFirstMedia('banner')->getUrl() : '#'
                         ];
                     })->toArray(),
