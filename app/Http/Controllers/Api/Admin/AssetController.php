@@ -71,7 +71,10 @@ class AssetController extends Controller
     {
         try{
             $status = $this->adminService->deleteAsset($id);
-            return $this->successResponse('Asset deleted successfully', (array)$status);
+            if($status){
+                return $this->successResponse('Asset deleted successfully', (array)$status);
+            }
+            return $this->errorResponse('No asset found for the given id');
         }catch (Exception $e){
             return $this->errorResponse($e->getMessage());
         }

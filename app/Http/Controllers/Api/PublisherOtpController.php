@@ -144,7 +144,6 @@ class PublisherOtpController extends Controller
                     'width' => $zone->width,
                     'height' => $zone->height,
                 ];
-                var_dump($payload);
                 // Send GET request with Basic Auth
                 $endpoint = env('AD_SERVER_BASE_URL').'/zon/new';
                 $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint, $payload);
