@@ -4,9 +4,11 @@ namespace App\Services;
 
 use App\Data\AssetData;
 use App\Data\AssetValuationsData;
+use App\Data\ZoneData;
 use App\Repositories\Interfaces\AssetValuationRepositoryInterface;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
 use App\Repositories\Interfaces\AssetRepositoryInterface;
+use App\Repositories\Interfaces\ZoneRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
@@ -16,15 +18,18 @@ class AdminService
     protected $campaignRepository;
     protected $assetRepository;
     protected $asstValutionRepository;
+    protected $zoneRepository;
 
     public function __construct(
         CampaignRepositoryInterface $campaignRepository,
         AssetRepositoryInterface $assetRepository,
         AssetValuationRepositoryInterface $assetValuationRepository,
+        ZoneRepositoryInterface $zoneRepository
     ) {
         $this->campaignRepository = $campaignRepository;
         $this->assetRepository = $assetRepository;
         $this->asstValutionRepository = $assetValuationRepository;
+        $this->zoneRepository = $zoneRepository;
     }
 
     /**
@@ -122,5 +127,52 @@ class AdminService
     public function viewAllAdvertisers(): Collection
     {
 
+    }
+
+    /**
+     * @return Collection
+     */
+    public function allZones(): Collection
+    {
+        return $this->zoneRepository->getActiveZones();
+    }
+
+    /**
+     * @param int $id
+     * @return Model|null
+     */
+    public function viewZone(int $id): Model
+    {
+        return $this->zoneRepository->find($id);
+    }
+
+    /**
+     * @param array $zoneData
+     * @return Model
+     * @throws ValidationException
+     */
+    public function createZone(array $zoneData): Model
+    {
+        $zoneData = new ZoneData($zoneData);
+        return $this->zoneRepository->create((array)$zoneData);
+    }
+
+    /**
+     * @param int $id
+     * @param $zoneData
+     * @return bool
+     */
+    public function updateZone(int $id, $zoneData): bool
+    {
+        return $this->zoneRepository->update($id, $zoneData);
+    }
+
+    /**
+     * @param int $id
+     * @return bool
+     */
+    public function deleteZone(int $id): bool
+    {
+        return $this->zoneRepository->delete($id);
     }
 }
