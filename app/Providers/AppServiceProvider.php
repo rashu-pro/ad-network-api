@@ -2,14 +2,17 @@
 
 namespace App\Providers;
 
+use App\Models\Zone;
 use App\Repositories\Eloquent\AssetRepository;
 use App\Repositories\Eloquent\AssetValuationRepository;
 use App\Repositories\Eloquent\CampaignMappingRepository;
 use App\Repositories\Eloquent\CampaignRepository;
+use App\Repositories\Eloquent\ZoneRepository;
 use App\Repositories\Interfaces\AssetRepositoryInterface;
 use App\Repositories\Interfaces\AssetValuationRepositoryInterface;
 use App\Repositories\Interfaces\CampaignMappingRepositoryInterface;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
+use App\Repositories\Interfaces\ZoneRepositoryInterface;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(AssetRepositoryInterface::class, AssetRepository::class);
         $this->app->bind(AssetValuationRepositoryInterface::class, AssetValuationRepository::class);
+        $this->app->bind(ZoneRepositoryInterface::class, ZoneRepository::class);
         $this->app->bind(CampaignRepositoryInterface::class, CampaignRepository::class);
         $this->app->bind(CampaignMappingRepositoryInterface::class, CampaignMappingRepository::class);
     }

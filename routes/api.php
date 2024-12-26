@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Auth\AdvertiserLoginController;
 use App\Http\Controllers\Api\Auth\PublisherRegisteredController;
 use App\Http\Controllers\Api\Auth\PublisherLoginController;
 use App\Http\Controllers\Api\Admin\AssetController;
+use App\Http\Controllers\Api\Admin\ZoneController;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
@@ -19,15 +20,27 @@ Route::prefix('admin')->group(function () {
     Route::post('/get-access-token',[AdminLoginController::class,'refresh']);
     Route::get('/profile',function (Request $request) {
         return Auth::guard('admin')->user();
-    })->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+    })->middleware('auth:admin');
+
     Route::get('/assets', [AssetController::class, 'allAssets'])
-        ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+        ->middleware('auth:admin');
     Route::get('/assets/active', [AssetController::class, 'allActiveAssets'])
-        ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+        ->middleware('auth:admin');
     Route::post('/assets/add', [AssetController::class, 'createAsset'])
-        ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+        ->middleware('auth:admin');
     Route::post('/assets/delete/{id}', [AssetController::class, 'deleteAsset'])
-        ->middleware(['auth:admin','abilities:'.TokenAbility::ACCESS_API->value]);
+        ->middleware('auth:admin');
+
+    Route::get('/zones', [ZoneController::class, 'allZones'])
+        ->middleware('auth:admin');
+    Route::get('/view-zone/{id}', [ZoneController::class, 'viewZone'])
+        ->middleware('auth:admin');
+    Route::post('/zones/add', [ZoneController::class, 'createZone'])
+        ->middleware('auth:admin');
+    Route::post('/zones/update/{id}', [ZoneController::class, 'updateZone'])
+        ->middleware('auth:admin');
+    Route::post('/zones/delete/{id}', [ZoneController::class, 'deleteZone'])
+        ->middleware('auth:admin');
 });
 Route::prefix('advertiser')->group(function (){
     Route::post('/register', [AdvertiserRegisteredController::class, 'store'])
