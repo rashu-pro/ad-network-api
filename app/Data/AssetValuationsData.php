@@ -32,7 +32,7 @@ class AssetValuationsData
             'min_population' => 'required|integer',
             'max_population' => 'integer',
             'min_duration_in_hour' => 'integer',
-            'max_price_per_hour' => 'decimal:2',
+            'max_price_per_hour' => 'numeric',
         ]);
 
         if ($validator->fails()) {
