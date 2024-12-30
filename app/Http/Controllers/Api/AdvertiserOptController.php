@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
-
+use OpenApi\Attributes as OA;
 class AdvertiserOptController extends Controller
 {
     use ApiResponse;
@@ -29,6 +29,106 @@ class AdvertiserOptController extends Controller
     {
         $this->advertiserService = $advertiserService;
     }
+
+    #[OA\Get(
+        path: "/api/advertiser/campaigns",
+        summary: "Get all campaigns for the authenticated advertiser",
+        security: [
+            ["bearerAuth" => []] // Protected route requiring Bearer token
+        ],
+        tags: ["Advertiser"],
+        responses: [
+            new OA\Response(response: 200, description: "All campaigns retrieved successfully",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: true),
+                            new OA\Property(property: "message", type: "string", example: "All campaigns"),
+                            new OA\Property(
+                                property: "data",
+                                type: "array",
+                                items: new OA\Items(
+                                    properties: [
+                                        new OA\Property(
+                                            property: "campaign",
+                                            properties: [
+                                                new OA\Property(property: "id", type: "integer", example: 1),
+                                                new OA\Property(property: "name", type: "string", example: "Summer Sale Campaign"),
+                                                new OA\Property(property: "advertiser_adserver_id", type: "integer", example: 101),
+                                                new OA\Property(property: "status", type: "string", enum: ["draft", "publish"], example: "draft"),
+                                                new OA\Property(property: "is_draft", type: "boolean", example: false),
+                                            ],
+                                            type: "object"
+                                        ),
+                                        new OA\Property(
+                                            property: "publishers",
+                                            type: "array",
+                                            items: new OA\Items(
+                                                properties: [
+                                                    new OA\Property(property: "publisher_id", type: "integer", example: 10),
+                                                    new OA\Property(property: "publisher_name", type: "string", example: "Publisher A"),
+                                                    new OA\Property(
+                                                        property: "assets",
+                                                        type: "array",
+                                                        items: new OA\Items(
+                                                            properties: [
+                                                                new OA\Property(property: "id", type: "integer", example: 1),
+                                                                new OA\Property(property: "name", type: "string", example: "Billboard Asset"),
+                                                                new OA\Property(property: "price_per_hour", type: "number", format: "float", example: 50.00),
+                                                                new OA\Property(property: "calculated_price", type: "number", format: "float", example: 500.00),
+                                                                new OA\Property(property: "start_date", type: "string", format: "date", example: "2024-01-01"),
+                                                                new OA\Property(property: "end_date", type: "string", format: "date", example: "2024-12-31"),
+                                                                new OA\Property(property: "zone_id", type: "integer", example: 20),
+                                                                new OA\Property(property: "zone_adserver_id", type: "integer", example: 2001),
+                                                                new OA\Property(property: "campaign_adserver_id", type: "integer", example: 3001),
+                                                                new OA\Property(property: "url", type: "string", format: "url", example: "https://example.com/asset"),
+                                                                new OA\Property(property: "target_url", type: "string", format: "url", example: "https://example.com/target"),
+                                                                new OA\Property(property: "is_active", type: "boolean", example: true),
+                                                                new OA\Property(property: "banner", type: "string", format: "url", example: "https://example.com/banner.jpg"),
+                                                            ],
+                                                            type: "object"
+                                                        )
+                                                    )
+                                                ],
+                                                type: "object"
+                                            )
+                                        )
+                                    ],
+                                    type: "object"
+                                )
+                            )
+                        ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 401, description: "Unauthorized",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Unauthorized"),
+                        ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 500, description: "Internal Server Error",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "An unexpected error occurred"),
+                        ],
+                        type: "object"
+                    )
+                )
+            )
+        ]
+    )]
     public function allCampaigns()
     {
         try{
@@ -40,6 +140,145 @@ class AdvertiserOptController extends Controller
         }
     }
 
+    #[OA\Post(
+        path: "/api/advertiser/create-campaign",
+        summary: "Create a new campaign",
+        security: [
+            ["bearerAuth" => []] // Protected route requiring Bearer token
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: "application/json",
+                schema: new OA\Schema(
+                    required: ["publisher_ids", "campaign_name", "target_url", "start_date", "end_date"],
+                    properties: [
+                        new OA\Property(
+                            property: "publisher_ids",
+                            description: "List of publisher IDs for the campaign",
+                            type: "array",
+                            items: new OA\Items(type: "integer"),
+                            example: [1, 2, 3]
+                        ),
+                        new OA\Property(
+                            property: "campaign_name",
+                            description: "Name of the campaign",
+                            type: "string",
+                            example: "Winter Sale Campaign"
+                        ),
+                        new OA\Property(
+                            property: "target_url",
+                            description: "Target URL for the campaign",
+                            type: "string",
+                            format: "url",
+                            example: "https://example.com/winter-sale"
+                        ),
+                        new OA\Property(
+                            property: "is_draft",
+                            description: "Indicates if the campaign is a draft",
+                            type: "boolean",
+                            example: false
+                        ),
+                        new OA\Property(
+                            property: "start_date",
+                            description: "Start date of the campaign",
+                            type: "string",
+                            format: "date",
+                            example: "2024-01-01"
+                        ),
+                        new OA\Property(
+                            property: "end_date",
+                            description: "End date of the campaign",
+                            type: "string",
+                            format: "date",
+                            example: "2024-01-31"
+                        )
+                    ],
+                    type: "object"
+                )
+            )
+        ),
+        tags: ["Advertiser"],
+        responses: [
+            new OA\Response(response: 201, description: "Campaign created successfully",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: true),
+                            new OA\Property(property: "message", type: "string", example: "created successfully"),
+                            new OA\Property(
+                                property: "data",
+                                description: "Details of the created campaign",
+                                properties: [
+                                    new OA\Property(property: "id", type: "integer", example: 1),
+                                    new OA\Property(property: "name", type: "string", example: "Winter Sale Campaign"),
+                                    new OA\Property(property: "advertiser_adserver_id", type: "integer", example: 101),
+                                    new OA\Property(property: "status", type: "string", enum: ["draft", "publish"], example: "draft"),
+                                    new OA\Property(property: "is_draft", type: "boolean", example: true),
+                                    new OA\Property(
+                                        property: "publishers",
+                                        type: "array",
+                                        items: new OA\Items(
+                                            properties: [
+                                                new OA\Property(property: "publisher_id", type: "integer", example: 1),
+                                                new OA\Property(property: "publisher_name", type: "string", example: "Publisher A"),
+                                                new OA\Property(
+                                                    property: "assets",
+                                                    type: "array",
+                                                    items: new OA\Items(
+                                                        properties: [
+                                                            new OA\Property(property: "id", type: "integer", example: 10),
+                                                            new OA\Property(property: "name", type: "string", example: "Billboard Asset"),
+                                                            new OA\Property(property: "price_per_hour", type: "number", format: "float", example: 50.00),
+                                                            new OA\Property(property: "calculated_price", type: "number", format: "float", example: 1200.00),
+                                                            new OA\Property(property: "start_date", type: "string", format: "date", example: "2024-01-01"),
+                                                            new OA\Property(property: "end_date", type: "string", format: "date", example: "2024-01-31"),
+                                                            new OA\Property(property: "zone_id", type: "integer", example: 20),
+                                                            new OA\Property(property: "is_active", type: "boolean", example: false),
+                                                            new OA\Property(property: "banner", type: "string", format: "url", example: "https://example.com/banner.jpg")
+                                                        ],
+                                                        type: "object"
+                                                    )
+                                                )
+                                            ],
+                                            type: "object"
+                                        )
+                                    )
+                                ],
+                                type: "object"
+                            )
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(response: 422, description: "Validation error",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Validation Error"),
+                            new OA\Property(property: "errors", type: "object"),
+                        ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 500, description: "Internal Server Error",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "An unexpected error occurred"),
+                        ],
+                        type: "object"
+                    )
+                )
+            )
+        ]
+    )]
     public function createCampaign(Request $request)
     {
         $request->validate([
@@ -91,6 +330,119 @@ class AdvertiserOptController extends Controller
         return $this->successResponse(message: 'created successfully', data: new CampaignResource($campaign));
     }
 
+    #[OA\Post(
+        path: "/api/advertiser/upload-campaign-banner/{id}",
+        summary: "Upload a banner for a campaign",
+        security: [
+            ["bearerAuth" => []] // Protected route requiring Bearer token
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: "multipart/form-data",
+                schema: new OA\Schema(
+                    required: ["banner", "publisher_id", "zone_id"],
+                    properties: [
+                        new OA\Property(
+                            property: "banner",
+                            description: "The banner file to upload. Only jpg, jpeg, png are allowed",
+                            type: "string",
+                            format: "binary"
+                        ),
+                        new OA\Property(
+                            property: "publisher_id",
+                            description: "ID of the publisher associated with the campaign",
+                            type: "integer",
+                            example: 2
+                        ),
+                        new OA\Property(
+                            property: "zone_id",
+                            description: "Zone ID of the publisher asset",
+                            type: "integer",
+                            example: 5
+                        )
+                    ],
+                    type: "object"
+                )
+            )
+        ),
+        tags: ["Advertiser"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                description: "ID of the campaign",
+                in: "path",
+                required: true,
+                schema: new OA\Schema(type: "integer", example: 1)
+            )
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Banner uploaded successfully",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: true),
+                            new OA\Property(property: "message", type: "string", example: "uploaded successfully"),
+                            new OA\Property(
+                                property: "data",
+                                properties: [
+                                    new OA\Property(
+                                        property: "url",
+                                        description: "URLs of the uploaded banners",
+                                        type: "array",
+                                        items: new OA\Items(type: "string", format: "url"),
+                                        example: [
+                                            "https://example.com/banner1.jpg",
+                                            "https://example.com/banner2.jpg"
+                                        ]
+                                    )
+                                ],
+                                type: "object"
+                            )
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(response: 422, description: "Validation error",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Validation Error"),
+                            new OA\Property(property: "errors", type: "object"),
+                        ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 404, description: "Campaign not found",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Campaign not found"),
+                        ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 500, description: "Internal Server Error",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "An unexpected error occurred"),
+                        ],
+                        type: "object"
+                    )
+                )
+            )
+        ]
+    )]
     public function uploadCampaign($id, Request $request)
     {
         $request->validate([
@@ -137,6 +489,127 @@ class AdvertiserOptController extends Controller
         ]);
     }
 
+    #[OA\Post(
+        path: "/api/advertiser/update-campaign/{id}",
+        summary: "Update an advertiser's campaign",
+        security: [
+            ["bearerAuth" => []] // Protected route requiring Bearer token
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: "application/json",
+                schema: new OA\Schema(
+                    required: [],
+                    properties: [
+                        new OA\Property(
+                            property: "campaign_name",
+                            description: "Name of the campaign",
+                            type: "string",
+                            example: "Spring Sale Campaign",
+                            nullable: true
+                        ),
+                        new OA\Property(
+                            property: "target_url",
+                            description: "Target URL for the campaign",
+                            type: "string",
+                            format: "url",
+                            example: "https://example.com/spring-sale",
+                            nullable: true
+                        ),
+                        new OA\Property(
+                            property: "is_draft",
+                            description: "Indicates if the campaign is a draft",
+                            type: "boolean",
+                            example: false,
+                            nullable: true
+                        ),
+                        new OA\Property(
+                            property: "status",
+                            description: "Status of the campaign",
+                            type: "string",
+                            enum: ["draft", "publish"],
+                            example: "draft", // Enum values for the status field
+                            nullable: true
+                        )
+                    ],
+                    type: "object"
+                )
+            )
+        ),
+        tags: ["Advertiser"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                description: "ID of the campaign to update",
+                in: "path",
+                required: true,
+                schema: new OA\Schema(type: "integer", example: 1)
+            )
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Campaign updated successfully",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: true),
+                            new OA\Property(property: "message", type: "string", example: "updated successfully"),
+                            new OA\Property(
+                                property: "data",
+                                description: "Details of the updated campaign",
+                                properties: [
+                                    new OA\Property(property: "id", type: "integer", example: 1),
+                                    new OA\Property(property: "name", type: "string", example: "Spring Sale Campaign"),
+                                    new OA\Property(property: "advertiser_adserver_id", type: "integer", example: 101),
+                                    new OA\Property(property: "status", type: "string", enum: ["draft", "publish"], example: "draft"),
+                                    new OA\Property(property: "is_draft", type: "boolean", example: false),
+                                ],
+                                type: "object"
+                            )
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(response: 422, description: "Validation error",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Validation Error"),
+                            new OA\Property(property: "errors", type: "object"),
+                        ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 404, description: "Campaign not found",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Campaign not found"),
+                        ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 500, description: "Internal Server Error",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "An unexpected error occurred"),
+                        ],
+                        type: "object"
+                    )
+                )
+            )
+        ]
+    )]
     public function updateCampaign($id, Request $request)
     {
 

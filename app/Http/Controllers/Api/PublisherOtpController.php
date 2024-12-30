@@ -11,6 +11,7 @@ use App\Http\Resources\CampaignResource;
 use App\Http\Resources\PublisherAssetResource;
 use App\Models\Campaign;
 use App\Models\CampaignMapping;
+use App\Models\PublisherAsset;
 use App\Models\Zone;
 use App\Repositories\Interfaces\AssetRepositoryInterface;
 use App\Repositories\Interfaces\AssetValuationRepositoryInterface;
@@ -23,7 +24,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use function Symfony\Component\String\s;
-
+use OpenApi\Attributes as OA;
 class PublisherOtpController extends Controller
 {
     use ApiResponse;
@@ -38,12 +39,327 @@ class PublisherOtpController extends Controller
         $this->cmp = $cmp;
     }
 
+    #[OA\Get(
+        path: "/api/publisher/assets",
+        summary: "Get all assets for the authenticated publisher",
+        security: [
+            ["bearerAuth" => []] // Protected route requiring Publisher's Bearer token
+        ],
+        tags: ["Publisher"],
+        responses: [
+            new OA\Response(response: 200, description: "Publisher assets retrieved successfully",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: true),
+                            new OA\Property(property: "message", type: "string", example: "Publisher assets"),
+                            new OA\Property(
+                                property: "data",
+                                description: "List of publisher assets",
+                                type: "array",
+                                items: new OA\Items(
+                                    properties: [
+                                        new OA\Property(property: "id", type: "integer", example: 1),
+                                        new OA\Property(property: "asset_id", type: "integer", example: 2),
+                                        new OA\Property(property: "asset_name", type: "string", example: "Billboard Asset"),
+                                        new OA\Property(property: "min_duration_in_hour", type: "number", format: "float", example: 1.5),
+                                        new OA\Property(property: "price_per_hour", type: "number", format: "float", example: 50.00),
+                                        new OA\Property(property: "url", type: "string", format: "url", example: "https://example.com/asset", nullable: true),
+                                        new OA\Property(
+                                            property: "zone",
+                                            description: "Zone details associated with the asset",
+                                            properties: [
+                                                new OA\Property(property: "id", type: "integer", example: 5),
+                                                new OA\Property(property: "name", type: "string", example: "Zone A"),
+                                                new OA\Property(property: "width", type: "integer", example: 1920),
+                                                new OA\Property(property: "height", type: "integer", example: 1080)
+                                            ],
+                                            type: "object"
+                                        )
+                                    ],
+                                    type: "object"
+                                )
+                            )
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(response: 401, description: "Unauthorized",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Unauthorized"),
+                        ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 500, description: "Internal Server Error",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "An unexpected error occurred"),
+                        ],
+                        type: "object"
+                    )
+                )
+            )
+        ]
+    )]
     public function assets()
     {
         $user = Auth::guard('publisher')->user();
         return $this->successResponse('Publisher assets',PublisherAssetResource::collection($user->assets()->get()));
     }
 
+    #[OA\Get(
+        path: "/api/publishers/available-zones/{asset_id}",
+        summary: "Get available zones for a given asset",
+        security: [
+            ["bearerAuth" => []] // Protected route requiring Publisher's Bearer token
+        ],
+        tags: ["Publisher"],
+        parameters: [
+            new OA\Parameter(
+                name: "asset_id",
+                description: "ID of the asset for which zones are retrieved",
+                in: "path",
+                required: true,
+                schema: new OA\Schema(type: "integer", example: 1)
+            )
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Available zones retrieved successfully",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: true),
+                            new OA\Property(property: "message", type: "string", example: "Available zones"),
+                            new OA\Property(
+                                property: "data",
+                                description: "List of available zones",
+                                type: "array",
+                                items: new OA\Items(
+                                    properties: [
+                                        new OA\Property(property: "id", type: "integer", example: 1),
+                                        new OA\Property(property: "asset_id", type: "integer", example: 1),
+                                        new OA\Property(property: "asset_name", type: "string", example: "Billboard Asset"),
+                                        new OA\Property(property: "width", type: "integer", example: 1920),
+                                        new OA\Property(property: "height", type: "integer", example: 1080),
+                                        new OA\Property(property: "type_id", type: "integer", example: 2),
+                                    ],
+                                    type: "object"
+                                )
+                            )
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(response: 401, description: "Unauthorized",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Unauthorized"),
+                        ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 404, description: "Asset not found",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Asset not found"),
+                        ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 500, description: "Internal Server Error",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "An unexpected error occurred"),
+                        ],
+                        type: "object"
+                    )
+                )
+            )
+        ]
+    )]
+    public function availableZones($asset_id)
+    {
+        $zones = $this->asr->find($asset_id)->zones()->get();
+        return $this->successResponse('Available zones', AssetZoneResource::collection($zones));
+    }
+
+    #[OA\Post(
+        path: "/api/publisher/set-asset",
+        summary: "Set an asset for the logged in publisher",
+        security: [
+            ["bearerAuth" => []] // Protected route requiring Publisher's Bearer token
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: "application/json",
+                schema: new OA\Schema(
+                    required: ["asset_id", "zone_id", "min_population", "min_duration_in_hour", "price_per_hour"],
+                    properties: [
+                        new OA\Property(
+                            property: "asset_id",
+                            description: "ID of the asset",
+                            type: "integer",
+                            example: 1
+                        ),
+                        new OA\Property(
+                            property: "zone_id",
+                            description: "ID of the zone where the asset belongs",
+                            type: "integer",
+                            example: 5
+                        ),
+                        new OA\Property(
+                            property: "min_population",
+                            description: "Minimum population capacity for the asset",
+                            type: "integer",
+                            example: 100
+                        ),
+                        new OA\Property(
+                            property: "max_population",
+                            description: "Maximum population capacity for the asset",
+                            type: "integer",
+                            example: 1000,
+                            nullable: true
+                        ),
+                        new OA\Property(
+                            property: "min_duration_in_hour",
+                            description: "Minimum duration in hours for using the asset",
+                            type: "number",
+                            format: "float",
+                            example: 1.5
+                        ),
+                        new OA\Property(
+                            property: "price_per_hour",
+                            description: "Price per hour for using the asset",
+                            type: "number",
+                            format: "float",
+                            example: 50.00
+                        ),
+                        new OA\Property(
+                            property: "url",
+                            description: "URL for the asset (required if the asset type is 'online')",
+                            type: "string",
+                            example: "https://example.com/asset",
+                            nullable: true
+                        )
+                    ],
+                    type: "object"
+                )
+            )
+        ),
+        tags: ["Publisher"],
+        responses: [
+            new OA\Response(response: 200, description: "Asset added to the publisher",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: true),
+                            new OA\Property(property: "message", type: "string", example: "Asset added to the publisher"),
+                            new OA\Property(
+                                property: "data",
+                                description: "Details of the publisher asset",
+                                properties: [
+                                    new OA\Property(property: "id", type: "integer", example: 1),
+                                    new OA\Property(
+                                        property: "publisher",
+                                        description: "Details of the publisher",
+                                        properties: [
+                                            new OA\Property(property: "id", type: "integer", example: 2),
+                                            new OA\Property(property: "name", type: "string", example: "Publisher A")
+                                        ],
+                                        type: "object"
+                                    ),
+                                    new OA\Property(
+                                        property: "asset",
+                                        description: "Details of the asset",
+                                        properties: [
+                                            new OA\Property(property: "id", type: "integer", example: 1),
+                                            new OA\Property(property: "name", type: "string", example: "Online Banner"),
+                                            new OA\Property(property: "type", type: "string", example: "online")
+                                        ],
+                                        type: "object"
+                                    ),
+                                    new OA\Property(
+                                        property: "zone",
+                                        description: "Details of the zone",
+                                        properties: [
+                                            new OA\Property(property: "id", type: "integer", example: 5),
+                                            new OA\Property(property: "name", type: "string", example: "Zone A")
+                                        ],
+                                        type: "object"
+                                    ),
+                                    new OA\Property(property: "min_duration_in_hour", type: "number", format: "float", example: 1.5),
+                                    new OA\Property(property: "price_per_hour", type: "number", format: "float", example: 50.00),
+                                    new OA\Property(property: "url", type: "string", example: "https://example.com/asset", nullable: true)
+                                ],
+                                type: "object"
+                            )
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(response: 422, description: "Validation error",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Validation Error"),
+                            new OA\Property(property: "errors", type: "object"),
+                        ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 404, description: "Asset validation not found or URL is required",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Asset validation not found or URL is required"),
+                        ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 500, description: "Internal Server Error",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "An unexpected error occurred"),
+                        ],
+                        type: "object"
+                    )
+                )
+            )
+        ]
+    )]
     public function setAsset(Request $request)
     {
         $request->validate([
@@ -89,9 +405,111 @@ class PublisherOtpController extends Controller
         $data['publisher_adserver_id'] = $publisher_adserver_id;
 
         $publisherAsset = $user->assets()->create($data);
-        return $this->successResponse(message: "Asset added to the publisher",data: (array)$publisherAsset);
+        return $this->successResponse(message: "Asset added to the publisher",data: new PublisherAsset($publisherAsset));
     }
 
+    #[OA\Get(
+        path: "/api/publisher/campaigns",
+        summary: "Get all active campaigns for the authenticated publisher",
+        security: [
+            ["bearerAuth" => []] // Protected route requiring Publisher's Bearer token
+        ],
+        tags: ["Publisher"],
+        responses: [
+            new OA\Response(response: 200, description: "All active campaigns retrieved successfully",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: true),
+                            new OA\Property(property: "message", type: "string", example: "All campaigns"),
+                            new OA\Property(
+                                property: "data",
+                                description: "List of active campaigns",
+                                type: "array",
+                                items: new OA\Items(
+                                    properties: [
+                                        new OA\Property(
+                                            property: "campaign",
+                                            description: "Campaign details",
+                                            properties: [
+                                                new OA\Property(property: "id", type: "integer", example: 1),
+                                                new OA\Property(property: "name", type: "string", example: "Winter Sale Campaign"),
+                                                new OA\Property(property: "advertiser_adserver_id", type: "integer", example: 101),
+                                                new OA\Property(property: "status", type: "string", example: "active"),
+                                                new OA\Property(property: "is_draft", type: "boolean", example: false)
+                                            ],
+                                            type: "object"
+                                        ),
+                                        new OA\Property(
+                                            property: "publishers",
+                                            description: "Details of publishers and their assets",
+                                            type: "array",
+                                            items: new OA\Items(
+                                                properties: [
+                                                    new OA\Property(property: "publisher_id", type: "integer", example: 10),
+                                                    new OA\Property(property: "publisher_name", type: "string", example: "Publisher A"),
+                                                    new OA\Property(
+                                                        property: "assets",
+                                                        description: "Assets associated with the publisher",
+                                                        type: "array",
+                                                        items: new OA\Items(
+                                                            properties: [
+                                                                new OA\Property(property: "id", type: "integer", example: 1),
+                                                                new OA\Property(property: "name", type: "string", example: "Billboard Asset"),
+                                                                new OA\Property(property: "price_per_hour", type: "number", format: "float", example: 50.00),
+                                                                new OA\Property(property: "calculated_price", type: "number", format: "float", example: 500.00),
+                                                                new OA\Property(property: "start_date", type: "string", format: "date", example: "2024-01-01"),
+                                                                new OA\Property(property: "end_date", type: "string", format: "date", example: "2024-12-31"),
+                                                                new OA\Property(property: "zone_id", type: "integer", example: 20),
+                                                                new OA\Property(property: "zone_adserver_id", type: "integer", example: 2001),
+                                                                new OA\Property(property: "campaign_adserver_id", type: "integer", example: 3001),
+                                                                new OA\Property(property: "url", type: "string", format: "url", example: "https://example.com/asset"),
+                                                                new OA\Property(property: "target_url", type: "string", format: "url", example: "https://example.com/target"),
+                                                                new OA\Property(property: "is_active", type: "boolean", example: true),
+                                                                new OA\Property(property: "banner", type: "string", format: "url", example: "https://example.com/banner.jpg")
+                                                            ],
+                                                            type: "object"
+                                                        )
+                                                    )
+                                                ],
+                                                type: "object"
+                                            )
+                                        )
+                                    ],
+                                    type: "object"
+                                )
+                            )
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(response: 401, description: "Unauthorized",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Unauthorized"),
+                        ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 500, description: "Internal Server Error",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "An unexpected error occurred"),
+                        ],
+                        type: "object"
+                    )
+                )
+            )
+        ]
+    )]
     public function allCampaigns()
     {
         $user = Auth::guard('publisher')->user();
@@ -99,12 +517,102 @@ class PublisherOtpController extends Controller
         return $this->successResponse('All campaigns',CampaignResource::collection(Campaign::whereIn('id',$mappings)->where('is_draft',false)->get()));
     }
 
-    public function availableZones($asset_id)
-    {
-        $zones = $this->asr->find($asset_id)->zones()->get();
-        return $this->successResponse('Available zones', AssetZoneResource::collection($zones));
-    }
-
+    #[OA\Post(
+        path: "/api/publishers/campaign-approval/{campaignId}",
+        summary: "Publish a campaign for a specific zone",
+        security: [
+            ["bearerAuth" => []] // Protected route requiring Publisher's Bearer token
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: "application/json",
+                schema: new OA\Schema(
+                    required: ["zone_id", "status"],
+                    properties: [
+                        new OA\Property(
+                            property: "zone_id",
+                            description: "ID of the zone associated with the campaign",
+                            type: "integer",
+                            example: 5
+                        ),
+                        new OA\Property(
+                            property: "note",
+                            description: "Optional note for the campaign mapping",
+                            type: "string",
+                            example: "This is a high-priority zone.",
+                            nullable: true
+                        ),
+                        new OA\Property(
+                            property: "status",
+                            description: "Status of the campaign mapping",
+                            type: "string",
+                            enum: ["approve", "reject"], // Replace with PublisherCampaignStatus::values() if dynamic enum values are possible
+                            example: "approve"
+                        )
+                    ],
+                    type: "object"
+                )
+            )
+        ),
+        tags: ["Publisher"],
+        parameters: [
+            new OA\Parameter(
+                name: "campaignId",
+                description: "ID of the campaign to publish",
+                in: "path",
+                required: true,
+                schema: new OA\Schema(type: "integer", example: 1)
+            )
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Campaign status updated successfully",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: true),
+                            new OA\Property(property: "message", type: "string", example: "Campaign status is updated")
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(response: 422, description: "Validation error or invalid campaign state",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Campaign or its banner does not exist"),
+                            new OA\Property(property: "errors", type: "object")
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(response: 404, description: "Campaign not found",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Campaign not found")
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(response: 500, description: "Internal Server Error",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "An unexpected error occurred")
+                        ]
+                    )
+                )
+            )
+        ]
+    )]
     public function publishCampaign($campaignId, Request $request)
     {
         $request->validate([

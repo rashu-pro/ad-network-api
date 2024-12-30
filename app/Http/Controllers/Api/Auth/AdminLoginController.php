@@ -11,11 +11,72 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
+use OpenApi\Attributes as OA;
+use Symfony\Component\HttpFoundation\Response;
 
 class AdminLoginController extends Controller
 {
     use ApiResponse;
-    public function login(AdminLoginRequest $request)
+
+
+
+    #[OA\Post(
+        path: "/api/admin/login",
+        summary: "Admin login",
+        requestBody: new OA\RequestBody(required: true,
+            content: new OA\MediaType(mediaType: "application/x-www-form-urlencoded",
+                schema: new OA\Schema(required: ["email", "password"],
+                    properties: [
+                            new OA\Property(property: 'email', description: "User email", type: "string"),
+                            new OA\Property(property: 'password', description: "User password", type: "string"),
+                        ]
+                    ))),
+        tags: ["**Authentication::Admin**"],
+        responses: [
+            new OA\Response(response: 200, description: "Login successful",
+                content: new OA\MediaType(mediaType: "application/json",
+                    schema: new OA\Schema(properties: [
+                        new OA\Property(property: 'success', type: "boolean", example: true),
+                        new OA\Property(property: 'message', type: "string", example: "Logged in successfully."),
+                        new OA\Property(property: 'data', properties: [
+                            new OA\Property(property: 'access_token', type: "string"),
+                            new OA\Property(property: 'access_token_expires_at', type: "string", format: "date-time"),
+                            new OA\Property(property: 'refresh_token', type: "string"),
+                            new OA\Property(property: 'refresh_token_expires_at', type: "string", format: "date-time"),
+                            new OA\Property(property: 'token_type', type: "string", example: "Bearer"),
+                        ],
+                            type: "object"
+                        )
+                    ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 422, description: "Validation error",
+                content: new OA\MediaType(mediaType: "application/json",
+                    schema: new OA\Schema(properties: [
+                        new OA\Property(property: 'success', type: "boolean", example: false),
+                        new OA\Property(property: 'message', type: "string", example: "Validation Error"),
+                        new OA\Property(property: 'errors', type: "object"),
+                    ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 500, description: "Internal Server Error",
+                content: new OA\MediaType(mediaType: "application/json",
+                    schema: new OA\Schema(properties: [
+                        new OA\Property(property: 'success', type: "boolean", example: false),
+                        new OA\Property(property: 'message', type: "string", example: "Server Error"),
+                        new OA\Property(property: 'errors', type: "object", nullable: true),
+                    ],
+                        type: "object"
+                    )
+                )
+            )
+        ]
+    )]
+    public function login(AdminLoginRequest $request): \Illuminate\Http\JsonResponse
     {
         try {
             $request->authenticate();
@@ -28,7 +89,59 @@ class AdminLoginController extends Controller
         }
     }
 
-    public function refresh(Request $request)
+    #[OA\Post(
+        path: "/api/admin/get-access-token",
+        summary: "Admin access token with refresh token",
+        security: [
+            ["bearerAuth" => []], // For JWT bearer tokens
+            ["sanctum" => []],    // For Sanctum API keys
+        ],
+        tags: ["**Authentication::Admin**"],
+        responses: [
+            new OA\Response(response: 200, description: "Access token generated successfully",
+                content: new OA\MediaType(mediaType: "application/json",
+                    schema: new OA\Schema(properties: [
+                        new OA\Property(property: 'success', type: "boolean", example: true),
+                        new OA\Property(property: 'message', type: "string", example: "Access token generated successfully."),
+                        new OA\Property(property: 'data', properties: [
+                            new OA\Property(property: 'access_token', type: "string"),
+                            new OA\Property(property: 'access_token_expires_at', type: "string", format: "date-time"),
+                            new OA\Property(property: 'refresh_token', type: "string"),
+                            new OA\Property(property: 'refresh_token_expires_at', type: "string", format: "date-time"),
+                            new OA\Property(property: 'token_type', type: "string", example: "Bearer"),
+                        ],
+                            type: "object"
+                        )
+                    ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 422, description: "Validation error",
+                content: new OA\MediaType(mediaType: "application/json",
+                    schema: new OA\Schema(properties: [
+                        new OA\Property(property: 'success', type: "boolean", example: false),
+                        new OA\Property(property: 'message', type: "string", example: "Validation Error"),
+                        new OA\Property(property: 'errors', type: "object"),
+                    ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 500, description: "Internal Server Error",
+                content: new OA\MediaType(mediaType: "application/json",
+                    schema: new OA\Schema(properties: [
+                        new OA\Property(property: 'success', type: "boolean", example: false),
+                        new OA\Property(property: 'message', type: "string", example: "Server Error"),
+                        new OA\Property(property: 'errors', type: "object", nullable: true),
+                    ],
+                        type: "object"
+                    )
+                )
+            )
+        ]
+    )]
+    public function refresh(Request $request): \Illuminate\Http\JsonResponse
     {
         try {
             $refreshToken = $request->bearerToken();
@@ -57,7 +170,7 @@ class AdminLoginController extends Controller
         }
     }
 
-    protected function createTokens(User $user)
+    protected function createTokens(User $user): \Illuminate\Http\JsonResponse
     {
         $accessTokenExpiresAt = Carbon::now()->addMinutes(config('sanctum.ac_expiration'));
         $refreshTokenExpiresAt = Carbon::now()->addMinutes(config('sanctum.rt_expiration'));
