@@ -82,4 +82,12 @@ return Application::configure(basePath: dirname(__DIR__))
                ],404);
            }
         });
+        $exceptions->render(function(\App\Exceptions\SecureApiException $e,Request $request) {
+           if ($request->is('api/*')) {
+               return response()->json([
+                   'success' => false,
+                   'message' => $e->getMessage()
+               ],$e->getStatusCode());
+           }
+        });
     })->create();

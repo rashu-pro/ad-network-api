@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Events\AdvertiserRegistered;
+use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Models\Advertiser;
 use App\Traits\ApiResponse;
@@ -22,26 +23,15 @@ class AdvertiserRegisteredController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $validatedData = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'business_name' => ['string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.Advertiser::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'advertiser_phone' => ['string', 'max:255'],
-            'advertiser_website' => ['string', 'max:255'],
-            'address' => ['string', 'max:255']
+        $advertiser = SecureApi::createAdvertiser($request->all())->toArray();
+        $localAdvertiser = Advertiser::create([
+            'secure_api_id' => $advertiser['secure_api_id'],
+            'email' => $advertiser['contactInfo']['email']
         ]);
-
-        $advertiser = Advertiser::create($validatedData);
-
-        event(new AdvertiserRegistered($advertiser));
-
-        // Auth::login($user);
 
         // Return success response
         return $this->successResponse('Advertiser user created successfully.', [
-            'advertiser_id' => $advertiser->id
+            'secure_api_id' => $localAdvertiser->secure_api_id
         ]);
     }
 }

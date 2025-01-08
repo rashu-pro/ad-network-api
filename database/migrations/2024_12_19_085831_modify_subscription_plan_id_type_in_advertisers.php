@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('advertisers', function (Blueprint $table) {
-            $table->string('subscription_plan_id')->nullable()->change();
+            $table->unsignedBigInteger('subscription_plan_id')->nullable(false)->change();
         });
     }
 };
