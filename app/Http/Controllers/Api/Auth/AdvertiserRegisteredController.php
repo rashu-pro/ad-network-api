@@ -9,8 +9,6 @@ use App\Models\Advertiser;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
 
 class AdvertiserRegisteredController extends Controller
 {

@@ -10,7 +10,7 @@ class Publisher extends SecureApiUser
 
     public function __construct(array $data, bool $requireCompanyKey = false)
     {
-        $data['companyCategory'] = 'AdPublisher';
+        $data['businessCategory'] = 'AdPublisher';
         parent::__construct($data,$requireCompanyKey);
     }
 }
