@@ -39,7 +39,7 @@ class SecureApiUser implements HttpModel
             'longitude' => 'numeric|required',
             'advertiser_website' => 'string|max:255|required',
             'advertiser_phone' => 'string|max:255|required',
-            'companyCategory' => ['required', new Enum(CompanyCategory::class)]
+            'businessCategory' => ['required', new Enum(CompanyCategory::class)]
         ];
         if ($data['companyCategory'] === CompanyCategory::ADVERTISER) {
             $rules['email'] = 'required|email|max:255|unique:advertisers,email';
@@ -63,7 +63,7 @@ class SecureApiUser implements HttpModel
         // Formatting the validated data
         return [
             "secure_api_id" => $data["secure_api_id"] ?? null,
-            "companyCategory" => $data["companyCategory"] ?? "AdPublisher",
+            "businessCategory" => $data["businessCategory"] ?? "AdPublisher",
             "businessName" => $data["business_name"] ?? "",
             "businessInfo" => [
                 "websiteUrl" => $data["advertiser_website"] ?? "",
@@ -103,7 +103,7 @@ class SecureApiUser implements HttpModel
     {
         return new self([
             "secure_api_id" => $response["companyKey"],
-            "companyCategory" => $response["companyCategory"],
+            "businessCategory" => $response["businessCategory"],
             "business_name" => $response["businessName"],
             "advertiser_website" => $response["businessInfo"]["websiteUrl"],
             "logo_url" => $response["businessInfo"]["logoUrl"] ?? '',
