@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Enums\TokenAbility;
+use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\AdvertiserLoginRequest;
 use App\Models\Advertiser;
@@ -15,12 +16,22 @@ use Laravel\Sanctum\PersonalAccessToken;
 class AdvertiserLoginController extends Controller
 {
     use ApiResponse;
-    public function login(AdvertiserLoginRequest $request)
+    public function login(Request $request)
     {
         try {
-            $request->authenticate();
-            $user = $request->user;
-            return $this->createTokens($user);
+            $res = SecureApi::login([
+                'grant_type' => 'password',
+                'username' => $request->email,
+                'password' => $request->password
+            ]);
+            $user = json_decode($res['user']);
+           $localUser = Advertiser::firstOrCreate(
+               ['email' => $user->email],
+               [
+                   'secure_api_key' => $user->userKey
+               ]
+           );
+            return $this->createTokens($localUser);
         } catch (ValidationException $e) {
             return $this->errorResponse($e->getMessage(), $e->errors(), 422);
         } catch (\Exception $e) {
