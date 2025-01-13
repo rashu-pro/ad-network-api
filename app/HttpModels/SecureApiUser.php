@@ -27,10 +27,10 @@ class SecureApiUser implements HttpModel
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'business_name' => 'required|string|max:255',
-            'logo_url' => 'required|string',
+//            'logo_url' => 'string',
             'password' => 'nullable|confirmed',
             'line1' => 'required|string',
-            'line2' => 'required|string',
+//            'line2' => 'required|string',
             'city' => 'required|string',
             'state' => 'required|string',
             'zipCode' => 'required|string',
@@ -38,7 +38,7 @@ class SecureApiUser implements HttpModel
             'latitude' => 'numeric|required',
             'longitude' => 'numeric|required',
             'advertiser_website' => 'string|max:255|required',
-            'advertiser_phone' => 'string|max:255|required',
+            'advertiser_phone' => 'string|max:255',
             'businessCategory' => ['required', new Enum(CompanyCategory::class)]
         ];
         if ($data['businessCategory'] === CompanyCategory::ADVERTISER) {

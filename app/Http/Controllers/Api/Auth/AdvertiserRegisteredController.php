@@ -9,7 +9,6 @@ use App\Models\Advertiser;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-
 class AdvertiserRegisteredController extends Controller
 {
     use ApiResponse;
