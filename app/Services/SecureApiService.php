@@ -39,7 +39,6 @@ class SecureApiService
         if ($response->ok()) {
             return Advertiser::fromApiResponse($response->json())->toArray();
         }
-
         throw new SecureApiException("Failed to fetch advertiser", $response->status(),$response->body());
     }
 

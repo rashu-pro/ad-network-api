@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\CampaignStatus;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AssetZoneResource;
 use App\Http\Resources\CampaignResource;
 use App\Models\Campaign;
 use App\Models\CampaignMapping;
@@ -330,6 +331,15 @@ class AdvertiserOptController extends Controller
         return $this->successResponse(message: 'created successfully', data: new CampaignResource($campaign));
     }
 
+    public function getUniqueZones($id)
+    {
+        $user = Auth::guard('advertiser')->user();
+        $campaign = $user->campaigns()->where('id',$id)->firstOrFail();
+        $zoneIds = $campaign->mappings()->select('publisher_zone_id')->distinct()->get();
+        $zones = Zone::wherein('id',$zoneIds)->get();
+        return $this->successResponse('Zones for banner',AssetZoneResource::collection($zones));
+    }
+
     #[OA\Post(
         path: "/api/advertiser/upload-campaign-banner/{id}",
         summary: "Upload a banner for a campaign",
@@ -454,7 +464,10 @@ class AdvertiserOptController extends Controller
         $mappings = $campaign->mappings()->where('publisher_id',$request->publisher_id)
             ->where('publisher_zone_id',$request->zone_id)
             ->get();
-        $zone = $mappings->first()->publisherZone;
+        if($mappings->count() <= 0){
+            return $this->errorResponse('Provided zone or publisher is not associated with this campaign');
+        }
+        $zone = Zone::findOrFail($request->zone_id);
 
         $validator = Validator::make($request->all(), [
             'banner' => 'required|file|mimes:jpg,jpeg,png|dimensions:width=' . $zone->width . ',height=' . $zone->height,
@@ -617,6 +630,18 @@ class AdvertiserOptController extends Controller
             'campaign_name', 'target_url', 'is_draft', 'status'
         ));
         return $this->successResponse(message: 'updated successfully', data: new CampaignResource(Campaign::findOrFail($id)));
+    }
+
+    public function availablePublishers()
+    {
+        $data = Publisher::orderby('created_at', 'desc')->get()->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'email' => $item->email
+            ];
+        });
+
+        return $this->successResponse('All available publishers',$data);
     }
 
 }

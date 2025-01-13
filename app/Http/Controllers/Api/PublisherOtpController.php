@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\AssetZoneResource;
 use App\Http\Resources\CampaignResource;
 use App\Http\Resources\PublisherAssetResource;
+use App\HttpModels\Publisher;
 use App\Models\Campaign;
 use App\Models\CampaignMapping;
 use App\Models\PublisherAsset;
@@ -111,9 +112,9 @@ class PublisherOtpController extends Controller
             )
         ]
     )]
-    public function assets()
+    public function assets($id)
     {
-        $user = Auth::guard('publisher')->user();
+        $user = \App\Models\Publisher::findOrFail($id);
         return $this->successResponse('Publisher assets',PublisherAssetResource::collection($user->assets()->get()));
     }
 
@@ -405,7 +406,7 @@ class PublisherOtpController extends Controller
         $data['publisher_adserver_id'] = $publisher_adserver_id;
 
         $publisherAsset = $user->assets()->create($data);
-        return $this->successResponse(message: "Asset added to the publisher",data: new PublisherAsset($publisherAsset));
+        return $this->successResponse(message: "Asset added to the publisher",data: new PublisherAssetResource($publisherAsset));
     }
 
     #[OA\Get(
