@@ -11,11 +11,11 @@
             "description": "local server"
         },
         {
-            "url": "http://staging.example.com",
+            "url": "https://adnetwork.masjidapps.net",
             "description": "staging server"
         },
         {
-            "url": "http://example.com",
+            "url": "https://adnetwork.masjidapps.net",
             "description": "production server"
         }
     ],
@@ -1742,165 +1742,6 @@
                         "sanctum": []
                     }
                 ]
-            }
-        },
-        "/api/advertiser/register": {
-            "post": {
-                "tags": [
-                    "Advertiser"
-                ],
-                "summary": "Register a new advertiser",
-                "description": "Handle an incoming registration request.",
-                "operationId": "941e00502b82f7f62d39d8bc8726e08e",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "first_name",
-                                    "last_name",
-                                    "email",
-                                    "password",
-                                    "password_confirmation"
-                                ],
-                                "properties": {
-                                    "first_name": {
-                                        "description": "First name of the advertiser",
-                                        "type": "string",
-                                        "example": "John"
-                                    },
-                                    "last_name": {
-                                        "description": "Last name of the advertiser",
-                                        "type": "string",
-                                        "example": "Doe"
-                                    },
-                                    "business_name": {
-                                        "description": "Business name of the advertiser",
-                                        "type": "string",
-                                        "example": "Tech Corp",
-                                        "nullable": true
-                                    },
-                                    "email": {
-                                        "description": "Email address of the advertiser",
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "john.doe@example.com"
-                                    },
-                                    "password": {
-                                        "description": "Password for the advertiser account",
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "password123"
-                                    },
-                                    "password_confirmation": {
-                                        "description": "Password confirmation for verification",
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "password123"
-                                    },
-                                    "advertiser_phone": {
-                                        "description": "Phone number of the advertiser",
-                                        "type": "string",
-                                        "example": "+1234567890",
-                                        "nullable": true
-                                    },
-                                    "advertiser_website": {
-                                        "description": "Website of the advertiser",
-                                        "type": "string",
-                                        "example": "https://example.com",
-                                        "nullable": true
-                                    },
-                                    "address": {
-                                        "description": "Address of the advertiser",
-                                        "type": "string",
-                                        "example": "123 Main Street, Springfield",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Advertiser registered successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Advertiser user created successfully."
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "advertiser_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Validation Error"
-                                        },
-                                        "errors": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "An unexpected error occurred"
-                                        },
-                                        "errors": {
-                                            "type": "object",
-                                            "nullable": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
             }
         },
         "/api/publisher/login": {

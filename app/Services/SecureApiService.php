@@ -39,7 +39,6 @@ class SecureApiService
         if ($response->ok()) {
             return Advertiser::fromApiResponse($response->json())->toArray();
         }
-
         throw new SecureApiException("Failed to fetch advertiser", $response->status(),$response->body());
     }
 
@@ -66,6 +65,23 @@ class SecureApiService
         $response = Http::get("{$this->base_url}/ad-network/ad-publisher/{$id}");
         if ($response->ok()) {
             return Advertiser::fromApiResponse($response->json())->toArray();
+        }
+
+        throw new SecureApiException("Failed to fetch advertiser", $response->status(),$response->body());
+    }
+
+    /**
+     * @throws SecureApiException
+     */
+    public function login(array $data)
+    {
+        $response = Http::asForm()->post("https://secure-api.net/api/v1/auth/token", [
+            'grant_type' => 'password',
+            'username' => $data['username'],
+            'password' => $data['password'],
+        ]);
+        if ($response->ok()) {
+            return $response->json();
         }
 
         throw new SecureApiException("Failed to fetch advertiser", $response->status(),$response->body());

@@ -50,10 +50,14 @@ Route::prefix('advertiser')->group(function (){
     Route::get('/profile',function (Request $request) {
         return Auth::guard('advertiser')->user();
     })->middleware(['auth:advertiser','abilities:'.TokenAbility::ACCESS_API->value]);
-    Route::post('/create-campaign',[\App\Http\Controllers\Api\AdvertiserOptController::class,'createCampaign']);
-    Route::post('/upload-campaign-banner/{id}',[\App\Http\Controllers\Api\AdvertiserOptController::class,'uploadCampaign']);
-    Route::post('/update-campaign/{id}',[\App\Http\Controllers\Api\AdvertiserOptController::class,'updateCampaign']);
-    Route::get('/campaigns',[\App\Http\Controllers\Api\AdvertiserOptController::class,'allCampaigns']);
+    Route::post('/subscribe',[\App\Http\Controllers\Api\PaymentController::class,'advertiserSubscription'])->middleware('auth:advertiser');
+    Route::get('/available-publishers',[\App\Http\Controllers\Api\AdvertiserOptController::class,'availablePublishers']);
+    Route::post('/create-campaign',[\App\Http\Controllers\Api\AdvertiserOptController::class,'createCampaign'])->middleware('auth:advertiser');
+    Route::get('/campaign/{id}/zones',[\App\Http\Controllers\Api\AdvertiserOptController::class,'getUniqueZones'])->middleware('auth:advertiser');
+    Route::post('/upload-campaign-banner/{id}',[\App\Http\Controllers\Api\AdvertiserOptController::class,'uploadCampaign'])->middleware('auth:advertiser');
+    Route::post('/campaign/{id}/payment',[\App\Http\Controllers\Api\PaymentController::class,'campaignPayment'])->middleware('auth:advertiser');
+    Route::post('/update-campaign/{id}',[\App\Http\Controllers\Api\AdvertiserOptController::class,'updateCampaign'])->middleware('auth:advertiser');
+    Route::get('/campaigns',[\App\Http\Controllers\Api\AdvertiserOptController::class,'allCampaigns'])->middleware('auth:advertiser');
 });
 
 Route::prefix('publisher')->group(function (){
@@ -66,7 +70,7 @@ Route::prefix('publisher')->group(function (){
     })->middleware(['auth:publisher','abilities:'.TokenAbility::ACCESS_API->value]);
     Route::post('/set-asset',[\App\Http\Controllers\Api\PublisherOtpController::class,'setAsset'])->middleware('auth:publisher');
     Route::post('/campaign-approval/{campaignId}',[\App\Http\Controllers\Api\PublisherOtpController::class,'publishCampaign'])->middleware('auth:publisher');
-    Route::get('/assets',[\App\Http\Controllers\Api\PublisherOtpController::class,'assets'])->middleware('auth:publisher');
+    Route::get('/{id}/assets',[\App\Http\Controllers\Api\PublisherOtpController::class,'assets']);
     Route::get('/campaigns',[\App\Http\Controllers\Api\PublisherOtpController::class,'allCampaigns'])->middleware('auth:publisher');
     Route::get('/available-zones/{asset_id}', [\App\Http\Controllers\Api\PublisherOtpController::class,'availableZones'])->middleware('auth:publisher');
 });
