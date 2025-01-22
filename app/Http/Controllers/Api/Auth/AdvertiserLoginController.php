@@ -186,6 +186,9 @@ class AdvertiserLoginController extends Controller
         $refreshToken = $user->createToken('refresh_token', [TokenAbility::ISSUE_ACCESS_TOKEN->value], $refreshTokenExpiresAt)->plainTextToken;
 
         return $this->successResponse('Logged in successfully.', [
+            'id' => $user->id,
+            'email' => $user->email,
+            'name' => $user->name,
             'access_token' => $accessToken,
             'access_token_expires_at' => $accessTokenExpiresAt,
             'refresh_token' => $refreshToken,

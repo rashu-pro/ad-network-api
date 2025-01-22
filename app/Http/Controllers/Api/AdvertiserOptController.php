@@ -335,9 +335,28 @@ class AdvertiserOptController extends Controller
     {
         $user = Auth::guard('advertiser')->user();
         $campaign = $user->campaigns()->where('id',$id)->firstOrFail();
-        $zoneIds = $campaign->mappings()->select('publisher_zone_id')->distinct()->get();
-        $zones = Zone::wherein('id',$zoneIds)->get();
-        return $this->successResponse('Zones for banner',AssetZoneResource::collection($zones));
+        $zones = $campaign->mappings()
+            ->select('publisher_zone_id', 'publisher_id')
+            ->distinct() // Ensure unique rows
+            ->get()
+            ->groupBy('publisher_zone_id')
+            ->map(function ($group) {
+                $zoneId =  $group->first()->publisher_zone_id;
+                $z = Zone::find($zoneId);
+                return [
+                    'id' => $zoneId,
+                    'asset_id' => $z->asset_id,
+                    'asset_name' => $z->asset->name,
+                    'type_id' => $z->type_id,
+                    'width' => $z->width,
+                    'height' => $z->height,
+                    'publishers' => $group->pluck('publisher_id')->unique()->values()->toArray()
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        return $this->successResponse('Zones for banner',$zones);
     }
 
     #[OA\Post(
@@ -457,11 +476,12 @@ class AdvertiserOptController extends Controller
     {
         $request->validate([
             'banner' => 'required|file|mimes:jpg,jpeg,png',
-            'publisher_id' => 'required|integer|exists:publishers,id',
+            'publisher_ids' => 'required|array|min:1', // Ensures at least one publisher ID is provided
+            'publisher_ids.*' => 'required|integer|exists:publishers,id',
             'zone_id' => 'required|integer|exists:publisher_assets,zone_id',
         ]);
         $campaign = Campaign::findOrFail($id);
-        $mappings = $campaign->mappings()->where('publisher_id',$request->publisher_id)
+        $mappings = $campaign->mappings()->whereIn('publisher_id',$request->publisher_ids)
             ->where('publisher_zone_id',$request->zone_id)
             ->get();
         if($mappings->count() <= 0){
@@ -642,6 +662,13 @@ class AdvertiserOptController extends Controller
         });
 
         return $this->successResponse('All available publishers',$data);
+    }
+
+    public function getCampaign($id)
+    {
+        $user = Auth::guard('advertiser')->user();
+        $campaign = $user->campaigns()->find($id);
+        return $this->successResponse('All campaign', new CampaignResource($campaign));
     }
 
 }
