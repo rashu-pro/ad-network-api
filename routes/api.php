@@ -58,6 +58,7 @@ Route::prefix('advertiser')->group(function (){
     Route::post('/campaign/{id}/payment',[\App\Http\Controllers\Api\PaymentController::class,'campaignPayment'])->middleware('auth:advertiser');
     Route::post('/update-campaign/{id}',[\App\Http\Controllers\Api\AdvertiserOptController::class,'updateCampaign'])->middleware('auth:advertiser');
     Route::get('/campaigns',[\App\Http\Controllers\Api\AdvertiserOptController::class,'allCampaigns'])->middleware('auth:advertiser');
+    Route::get('/campaign/{id}',[\App\Http\Controllers\Api\AdvertiserOptController::class,'getCampaign'])->middleware('auth:advertiser');
 });
 
 Route::prefix('publisher')->group(function (){

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\HttpModels\Publisher;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -29,7 +30,7 @@ class CampaignResource extends JsonResource
 
                 return [
                     'publisher_id' => $publisher->id,
-                    'publisher_name' => $publisher->name,
+                    'publisher_name' => 'test',
                     'assets' => $groupedMappings->map(function ($mapping) {
                         $asset = $mapping->publisherAsset; // Get asset details from mapping
                         return [
