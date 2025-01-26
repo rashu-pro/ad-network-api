@@ -654,12 +654,22 @@ class AdvertiserOptController extends Controller
 
     public function availablePublishers()
     {
-        $data = Publisher::orderby('created_at', 'desc')->get()->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'email' => $item->email
-            ];
-        });
+        $data = Publisher::with(['assets.asset'])
+        ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($publisher) {
+                return [
+                    'id' => $publisher->id,
+                    'email' => $publisher->email,
+                    'assets' => $publisher->assets->map(function ($publisherAsset) {
+                        return [
+                            'id' => $publisherAsset->asset->id ?? null,
+                            'name' => $publisherAsset->asset->name ?? null,
+                            'type' => $publisherAsset->asset->type ?? null,
+                        ];
+                    }),
+                ];
+            });
 
         return $this->successResponse('All available publishers',$data);
     }
