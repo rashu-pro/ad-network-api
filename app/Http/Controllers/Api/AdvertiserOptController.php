@@ -350,7 +350,7 @@ class AdvertiserOptController extends Controller
                     'type_id' => $z->type_id,
                     'width' => $z->width,
                     'height' => $z->height,
-                    'publishers' => $group->pluck('publisher_id')->unique()->values()->toArray()
+                    'publisher_ids' => $group->pluck('publisher_id')->unique()->values()->toArray()
                 ];
             })
             ->values()
