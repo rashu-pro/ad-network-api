@@ -80,11 +80,15 @@ class SecureApiUser implements HttpModel
             "secure_api_id" => $data["secure_api_id"] ?? null,
             "isAdvertiser" => array_key_exists('isAdvertiser', $data)
                 ? (bool) $data["isAdvertiser"]
-                : ($data['businessCategory'] ?? null) === CompanyCategory::ADVERTISER,
+                : (is_array($data['businessCategory'] ?? null)
+                    ? in_array(CompanyCategory::ADVERTISER, $data['businessCategory'], true)
+                    : ($data['businessCategory'] ?? null) === CompanyCategory::ADVERTISER),
 
             "isAdPublisher" => array_key_exists('isAdPublisher', $data)
                 ? (bool) $data["isAdPublisher"]
-                : ($data['businessCategory'] ?? null) === CompanyCategory::PUBLISHER,
+                : (is_array($data['businessCategory'] ?? null)
+                    ? in_array(CompanyCategory::PUBLISHER, $data['businessCategory'], true)
+                    : ($data['businessCategory'] ?? null) === CompanyCategory::PUBLISHER),
 
             "businessName" => $data["business_name"] ?? "",
             "businessInfo" => [

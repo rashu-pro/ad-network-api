@@ -25,7 +25,7 @@ class SecureApiService
 
         $response = Http::post("{$this->base_url}/ad-network/register", $userData->toArray());
         if ($response->ok()) {
-            return Advertiser::fromApiResponse($response->json());
+            return SecureApiUser::fromApiResponse($response->json());
         }
 
         throw new SecureApiException("Unable to create advertiser", $response->status(),$response->body());
