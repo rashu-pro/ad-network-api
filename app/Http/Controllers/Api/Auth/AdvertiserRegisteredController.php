@@ -20,16 +20,16 @@ class AdvertiserRegisteredController extends Controller
         if($user['isAdvertiser']){
             $localAdvertiser = Advertiser::create([
                 'secure_api_id' => $user['secure_api_id'],
-                'email' => $user['email']
+                'email' => $user['contactInfo']['email']
                 ]);
         }
-        if($user['isPublisher']){
+        if($user['isAdPublisher']){
             $localPublisher = Publisher::create([
                 'secure_api_id' => $user['secure_api_id'],
                 'email' => $user['contactInfo']['email']
             ]);
         }
-        return $this->successResponse('Advertiser user created successfully.', [
+        return $this->successResponse('User created successfully.', [
             'secure_api_id' => $user['secure_api_id'],
         ]);
     }

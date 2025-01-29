@@ -40,7 +40,6 @@ class SecureApiUser implements HttpModel
             'longitude' => 'numeric|required',
             'advertiser_website' => 'string|max:255|required',
             'advertiser_phone' => 'string|max:255',
-            'businessCategory' => ['required', new Enum(CompanyCategory::class)],
             'isAdvertiser' => ['required'],
             'isAdPublisher' => ['required']
         ];
@@ -75,12 +74,11 @@ class SecureApiUser implements HttpModel
         if ($validator->fails()) {
             throw new ValidationException($validator);
         }
-
         // Formatting the validated data
         return [
             "secure_api_id" => $data["secure_api_id"] ?? null,
-            "isAdPublisher" => !$data["businessCategory"] == CompanyCategory::ADVERTISER,
-            "isAdvertiser" => $data["businessCategory"] === CompanyCategory::ADVERTISER,
+            "isAdvertiser" => $data["isAdvertiser"],
+            "isAdPublisher" => $data['isAdPublisher'],
             "businessName" => $data["business_name"] ?? "",
             "businessInfo" => [
                 "websiteUrl" => $data["advertiser_website"] ?? "",
@@ -118,9 +116,12 @@ class SecureApiUser implements HttpModel
      */
     public static function fromApiResponse(array $response): self
     {
+        $categories = str_contains($response["businessCategory"], ',')
+            ? array_map('trim', explode(',', $response['businessCategory']))
+            : [trim($response['businessCategory'])];
         return new self([
             "secure_api_id" => $response["companyKey"],
-            "businessCategory" => $response["businessCategory"],
+//            "businessCategory" => $categories,
             "business_name" => $response["businessName"],
             "advertiser_website" => $response["businessInfo"]["websiteUrl"],
             "logo_url" => $response["businessInfo"]["logoUrl"] ?? '',
@@ -136,6 +137,8 @@ class SecureApiUser implements HttpModel
             "last_name" => explode(' ', $response["contactInfo"]["name"])[1] ?? "",
             "email" => $response["contactInfo"]["email"],
             "advertiser_phone" => $response["contactInfo"]["phone"],
+            "isAdvertiser" => in_array(CompanyCategory::ADVERTISER->value, $categories),
+            "isAdPublisher" => in_array(CompanyCategory::PUBLISHER->value, $categories),
         ],true);
     }
 }
