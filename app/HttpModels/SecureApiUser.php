@@ -123,9 +123,12 @@ class SecureApiUser implements HttpModel
      */
     public static function fromApiResponse(array $response): self
     {
+        $categories = str_contains($response["businessCategory"], ',')
+            ? explode(',', $response['businessCategory'])
+            : [$response['businessCategory']];
         return new self([
             "secure_api_id" => $response["companyKey"],
-            "businessCategory" => $response["businessCategory"],
+            "businessCategory" => $categories,
             "business_name" => $response["businessName"],
             "advertiser_website" => $response["businessInfo"]["websiteUrl"],
             "logo_url" => $response["businessInfo"]["logoUrl"] ?? '',
@@ -141,8 +144,8 @@ class SecureApiUser implements HttpModel
             "last_name" => explode(' ', $response["contactInfo"]["name"])[1] ?? "",
             "email" => $response["contactInfo"]["email"],
             "advertiser_phone" => $response["contactInfo"]["phone"],
-            "isAdvertiser" => ($response['businessCategory'] ?? null) === CompanyCategory::ADVERTISER,
-            "isAdPublisher" => ($response['businessCategory'] ?? null) === CompanyCategory::PUBLISHER,
+            "isAdvertiser" => in_array(CompanyCategory::ADVERTISER, $categories, true),
+            "isAdPublisher" => in_array(CompanyCategory::PUBLISHER, $categories, true),
         ],true);
     }
 }
