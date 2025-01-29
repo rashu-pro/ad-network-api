@@ -74,22 +74,11 @@ class SecureApiUser implements HttpModel
         if ($validator->fails()) {
             throw new ValidationException($validator);
         }
-
         // Formatting the validated data
         return [
             "secure_api_id" => $data["secure_api_id"] ?? null,
-            "isAdvertiser" => array_key_exists('isAdvertiser', $data)
-                ? (bool) $data["isAdvertiser"]
-                : (is_array($data['businessCategory'] ?? null)
-                    ? in_array(CompanyCategory::ADVERTISER, $data['businessCategory'], true)
-                    : ($data['businessCategory'] ?? null) === CompanyCategory::ADVERTISER),
-
-            "isAdPublisher" => array_key_exists('isAdPublisher', $data)
-                ? (bool) $data["isAdPublisher"]
-                : (is_array($data['businessCategory'] ?? null)
-                    ? in_array(CompanyCategory::PUBLISHER, $data['businessCategory'], true)
-                    : ($data['businessCategory'] ?? null) === CompanyCategory::PUBLISHER),
-
+            "isAdvertiser" => $data["isAdvertiser"],
+            "isAdPublisher" => $data['isAdPublisher'],
             "businessName" => $data["business_name"] ?? "",
             "businessInfo" => [
                 "websiteUrl" => $data["advertiser_website"] ?? "",
@@ -128,11 +117,11 @@ class SecureApiUser implements HttpModel
     public static function fromApiResponse(array $response): self
     {
         $categories = str_contains($response["businessCategory"], ',')
-            ? explode(',', $response['businessCategory'])
-            : [$response['businessCategory']];
+            ? array_map('trim', explode(',', $response['businessCategory']))
+            : [trim($response['businessCategory'])];
         return new self([
             "secure_api_id" => $response["companyKey"],
-            "businessCategory" => $categories,
+//            "businessCategory" => $categories,
             "business_name" => $response["businessName"],
             "advertiser_website" => $response["businessInfo"]["websiteUrl"],
             "logo_url" => $response["businessInfo"]["logoUrl"] ?? '',
@@ -148,8 +137,8 @@ class SecureApiUser implements HttpModel
             "last_name" => explode(' ', $response["contactInfo"]["name"])[1] ?? "",
             "email" => $response["contactInfo"]["email"],
             "advertiser_phone" => $response["contactInfo"]["phone"],
-            "isAdvertiser" => in_array(CompanyCategory::ADVERTISER, $categories, true),
-            "isAdPublisher" => in_array(CompanyCategory::PUBLISHER, $categories, true),
+            "isAdvertiser" => in_array(CompanyCategory::ADVERTISER->value, $categories),
+            "isAdPublisher" => in_array(CompanyCategory::PUBLISHER->value, $categories),
         ],true);
     }
 }
