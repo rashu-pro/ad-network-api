@@ -39,7 +39,9 @@ class SecureApiUser implements HttpModel
             'longitude' => 'numeric|required',
             'advertiser_website' => 'string|max:255|required',
             'advertiser_phone' => 'string|max:255',
-            'businessCategory' => ['required', new Enum(CompanyCategory::class)]
+            'businessCategory' => ['required', new Enum(CompanyCategory::class)],
+            'isAdvertiser' => ['required'],
+            'isPublisher' => ['required']
         ];
         if ($data['businessCategory'] === CompanyCategory::ADVERTISER) {
             $rules['email'] = 'required|email|max:255|unique:advertisers,email';

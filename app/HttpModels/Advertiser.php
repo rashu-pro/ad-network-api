@@ -12,6 +12,7 @@ class Advertiser extends SecureApiUser
     public function __construct(array $data, bool $requireCompanyKey = false)
     {
         $data['businessCategory'] = CompanyCategory::ADVERTISER;
+        $data['isAdvertiser'] = true;
         parent::__construct($data,$requireCompanyKey);
     }
 }
