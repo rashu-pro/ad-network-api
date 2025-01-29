@@ -3,6 +3,7 @@
 namespace App\HttpModels;
 
 use App\Enums\CompanyCategory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\ValidationException;
@@ -41,9 +42,22 @@ class SecureApiUser implements HttpModel
             'advertiser_phone' => 'string|max:255',
             'businessCategory' => ['required', new Enum(CompanyCategory::class)],
             'isAdvertiser' => ['required'],
-            'isPublisher' => ['required']
+            'isAdPublisher' => ['required']
         ];
-        if ($data['businessCategory'] === CompanyCategory::ADVERTISER) {
+        if ($data['isAdvertiser'] === true && $data['isAdPublisher'] === true) {
+            // Check uniqueness in both tables
+            $rules['email'] = [
+                'required',
+                'email',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    if (DB::table('advertisers')->where('email', $value)->exists() ||
+                        DB::table('publishers')->where('email', $value)->exists()) {
+                        $fail('The email has already been taken in either advertisers or publishers.');
+                    }
+                }
+            ];
+        } elseif ($data['isAdvertiser'] === true) {
             $rules['email'] = 'required|email|max:255|unique:advertisers,email';
         } else {
             $rules['email'] = 'required|email|max:255|unique:publishers,email';
