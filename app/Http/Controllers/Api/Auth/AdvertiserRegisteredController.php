@@ -23,7 +23,7 @@ class AdvertiserRegisteredController extends Controller
                 'email' => $user['contactInfo']['email']
                 ]);
         }
-        if($user['isPublisher']){
+        if($user['isAdPublisher']){
             $localPublisher = Publisher::create([
                 'secure_api_id' => $user['secure_api_id'],
                 'email' => $user['contactInfo']['email']
