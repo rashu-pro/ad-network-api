@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\SecureApiException;
 use App\HttpModels\Advertiser;
 use App\HttpModels\Publisher;
+use App\HttpModels\SecureApiUser;
 use Illuminate\Support\Facades\Http;
 
 class SecureApiService
@@ -15,6 +16,20 @@ class SecureApiService
         $this->base_url = $base_url;
     }
 
+    /**
+     * @throws \Exception
+     */
+    public function createUser(array $data): \App\HttpModels\SecureApiUser
+    {
+        $userData = new SecureApiUser($data);
+
+        $response = Http::post("{$this->base_url}/ad-network/register", $advertiserData->toArray());
+        if ($response->ok()) {
+            return Advertiser::fromApiResponse($response->json());
+        }
+
+        throw new SecureApiException("Unable to create advertiser", $response->status(),$response->body());
+    }
     /**
      * @throws \Exception
      */

@@ -75,3 +75,4 @@ Route::prefix('publisher')->group(function (){
     Route::get('/campaigns',[\App\Http\Controllers\Api\PublisherOtpController::class,'allCampaigns'])->middleware('auth:publisher');
     Route::get('/available-zones/{asset_id}', [\App\Http\Controllers\Api\PublisherOtpController::class,'availableZones'])->middleware('auth:publisher');
 });
+Route::post('user/register',[AdvertiserRegisteredController::class,'userCreate']);

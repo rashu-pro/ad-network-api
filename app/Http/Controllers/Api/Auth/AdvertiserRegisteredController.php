@@ -6,12 +6,33 @@ use App\Events\AdvertiserRegistered;
 use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Models\Advertiser;
+use App\Models\Publisher;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 class AdvertiserRegisteredController extends Controller
 {
     use ApiResponse;
+
+    public function userCreate(Request $request)
+    {
+        $user = SecureApi::createUser($request->all())->toArray();
+        if($user['isAdvertiser']){
+            $localAdvertiser = Advertiser::create([
+                'secure_api_id' => $user['secure_api_id'],
+                'email' => $user['email']
+                ]);
+        }
+        if($user['isPublisher']){
+            $localPublisher = Publisher::create([
+                'secure_api_id' => $user['secure_api_id'],
+                'email' => $user['contactInfo']['email']
+            ]);
+        }
+        return $this->successResponse('Advertiser user created successfully.', [
+            'secure_api_id' => $user['secure_api_id'],
+        ]);
+    }
 
     /**
      * Handle an incoming registration request.
