@@ -23,7 +23,7 @@ class SecureApiService
     {
         $userData = new SecureApiUser($data);
 
-        $response = Http::post("{$this->base_url}/ad-network/register", $advertiserData->toArray());
+        $response = Http::post("{$this->base_url}/ad-network/register", $userData->toArray());
         if ($response->ok()) {
             return Advertiser::fromApiResponse($response->json());
         }
