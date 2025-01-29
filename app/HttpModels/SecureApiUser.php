@@ -141,6 +141,8 @@ class SecureApiUser implements HttpModel
             "last_name" => explode(' ', $response["contactInfo"]["name"])[1] ?? "",
             "email" => $response["contactInfo"]["email"],
             "advertiser_phone" => $response["contactInfo"]["phone"],
+            "isAdvertiser" => ($response['businessCategory'] ?? null) === CompanyCategory::ADVERTISER,
+            "isAdPublisher" => ($response['businessCategory'] ?? null) === CompanyCategory::PUBLISHER,
         ],true);
     }
 }
