@@ -78,8 +78,8 @@ class SecureApiUser implements HttpModel
         // Formatting the validated data
         return [
             "secure_api_id" => $data["secure_api_id"] ?? null,
-            "isAdPublisher" => !$data["isAdPublisher"],
-            "isAdvertiser" => $data["isAdvertiser"],
+            "isAdPublisher" => $data["isAdPublisher"] ?? $data['businessCategory'] == CompanyCategory::PUBLISHER,
+            "isAdvertiser" => $data["isAdvertiser"] ?? $data['businessCategory'] == CompanyCategory::ADVERTISER,
             "businessName" => $data["business_name"] ?? "",
             "businessInfo" => [
                 "websiteUrl" => $data["advertiser_website"] ?? "",
