@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\PaymentStatus;
+use App\Enums\PublisherCampaignStatus;
+use App\Events\CampaignPublished;
 use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Models\Advertiser;
@@ -50,8 +52,19 @@ class PaymentController extends Controller
         $user = Auth::guard('advertiser')->user();
         $campaign = $user->campaigns()->where('id', $id)->first();
         $campaign->update([
-            'payment_status' => PaymentStatus::PAID
+            'payment_status' => PaymentStatus::PAID,
         ]);
+        $campaign->refresh();
+        $mappings = $campaign->campaignMappings()->get();
+        if($campaign->payment_status == PaymentStatus::PAID){
+            foreach($mappings as $mapping){
+                $mapping->update([
+                    'status' => PublisherCampaignStatus::APPROVE,
+                ]);
+                $mapping->refresh();
+            }
+        }
+        dispatch(new CampaignPublished($campaign));
         return $this->successResponse('Payment successful');
     }
 }
