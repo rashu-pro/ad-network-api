@@ -4,14 +4,16 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -19,6 +21,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'secure_api_id',
         'name',
         'email',
         'password',
@@ -45,5 +48,24 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * The assets that belong to the Publisher
+     *
+     * @return HasMany
+     */
+    public function assets() : HasMany
+    {
+        return $this->hasMany(PublisherAsset::class, 'publisher_id','id');
+    }
+
+    public function publisherCampaigns()
+    {
+        return $this->hasMany(Campaign::class, 'publisher_id','id');
+    }
+    public function campaigns()
+    {
+        return $this->hasMany(Campaign::class,'advertiser_id','id');
     }
 }

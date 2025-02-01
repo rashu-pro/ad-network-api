@@ -51,6 +51,10 @@ return [
         'publisher' => [
             'driver' => 'sanctum',
             'provider' => 'publishers',
+        ],
+        'api' => [
+            'driver' => 'sanctum',
+            'provider' => 'sanctum_suers',
         ]
     ],
 
@@ -83,6 +87,10 @@ return [
         'publishers' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\Publisher::class),
+        ],
+        'sanctum_suers' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_MODEL', App\Models\User::class),
         ]
 
         // 'users' => [
@@ -125,6 +133,12 @@ return [
         ],
         'publishers' => [
             'provider' => 'publishers',
+            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+        'sanctum_users' => [
+            'provider' => 'sanctum_users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
             'expire' => 60,
             'throttle' => 60,

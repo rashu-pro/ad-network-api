@@ -22,7 +22,7 @@ class PublisherAsset extends Model
      */
     public function publisher()
     {
-        return $this->belongsTo(Publisher::class);
+        return $this->belongsTo(User::class,'publisher_id','id');
     }
 
     /**

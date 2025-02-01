@@ -25,9 +25,9 @@ class CreateCampaignMappingsTable extends Migration
             $table->boolean('is_active');
             $table->timestamps();
 
-            $table->foreign('advertiser_id')->references('id')->on('advertisers')->onDelete('cascade');
+            $table->foreign('advertiser_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('campaign_id')->references('id')->on('campaigns')->onDelete('cascade');
-            $table->foreign('publisher_id')->references('id')->on('publishers')->onDelete('cascade');
+            $table->foreign('publisher_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('publisher_asset_id')->references('id')->on('publisher_assets')->onDelete('cascade');
         });
     }

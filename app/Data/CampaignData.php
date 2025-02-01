@@ -32,12 +32,11 @@ class CampaignData
     public function __construct(array $data)
     {
         $validator = Validator::make($data, [
-            'advertiser_id' => 'required|integer|exists:advertisers,id',
+            'advertiser_id' => 'required|integer|exists:users,id',
             'advertiser_adserver_id' => 'nullable|integer',
             'campaign_name' => 'required|string|max:255',
             'target_url' => 'nullable|string|max:255',
-            'payment_status' => 'nullable|in:' . implode(',', PaymentStatus::values()),
-            'is_draft' => 'required|boolean'
+            'payment_status' => 'nullable|in:' . implode(',', PaymentStatus::values())
         ]);
 
         if ($validator->fails()) {
@@ -50,6 +49,6 @@ class CampaignData
         $this->target_url = $data['target_url'] ?? null;
         $this->payment_status = PaymentStatus::from($data['payment_status'] ?? PaymentStatus::PENDING->value);
         $this->status = CampaignStatus::DRAFT;
-        $this->is_draft = $data['is_draft'];
+        $this->is_draft = true;
     }
 }

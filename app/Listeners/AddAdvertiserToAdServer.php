@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\AdvertiserRegistered;
 use App\Models\Advertiser;
+use App\Models\User;
 use Illuminate\Support\Facades\Http;
 
 class AddAdvertiserToAdServer
@@ -25,8 +26,8 @@ class AddAdvertiserToAdServer
 
         // Payload data
         $payload = [
-            'advertiserName' => $advertiserRegistered->first_name . ' ' . $advertiserRegistered->last_name,
-            'contactName'    => $advertiserRegistered->first_name . ' ' . $advertiserRegistered->last_name,
+            'advertiserName' => $advertiserRegistered->name ?? 'test_advertiser_'.$advertiserRegistered->id,
+            'contactName'    => $advertiserRegistered->name ?? 'test_advertiser_'.$advertiserRegistered->id,
             'emailAddress'   => $advertiserRegistered->email,
             'username'       => $advertiserRegistered->email,
         ];
@@ -37,7 +38,7 @@ class AddAdvertiserToAdServer
         $advertiser_id = $response->object()->advertiserId;
 
         //After the successful response add the advertiser_id into database
-        $advertiser = Advertiser::find($advertiserRegistered->id);
+        $advertiser = User::find($advertiserRegistered->id);
         $advertiser->adserver_id = $advertiser_id;
         $advertiser->save();
     }

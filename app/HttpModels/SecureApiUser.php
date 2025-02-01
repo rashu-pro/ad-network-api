@@ -2,7 +2,7 @@
 
 namespace App\HttpModels;
 
-use App\Enums\CompanyCategory;
+use App\Enums\RolesEnum;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Enum;
@@ -137,8 +137,8 @@ class SecureApiUser implements HttpModel
             "last_name" => explode(' ', $response["contactInfo"]["name"])[1] ?? "",
             "email" => $response["contactInfo"]["email"],
             "advertiser_phone" => $response["contactInfo"]["phone"],
-            "isAdvertiser" => in_array(CompanyCategory::ADVERTISER->value, $categories),
-            "isAdPublisher" => in_array(CompanyCategory::PUBLISHER->value, $categories),
+            "isAdvertiser" => in_array(RolesEnum::ADVERTISER->value, $categories),
+            "isAdPublisher" => in_array(RolesEnum::PUBLISHER->value, $categories),
         ],true);
     }
 }

@@ -31,7 +31,7 @@ class CampaignMapping extends Model implements HasMedia
      */
     public function advertiser(): BelongsTo
     {
-        return $this->belongsTo(Advertiser::class);
+        return $this->belongsTo(User::class,'advertiser_id','id');
     }
 
     /**
@@ -41,7 +41,7 @@ class CampaignMapping extends Model implements HasMedia
      */
     public function campaign(): BelongsTo
     {
-        return $this->belongsTo(Campaign::class);
+        return $this->belongsTo(Campaign::class,'campaign_id','id');
     }
 
     /**
@@ -51,7 +51,7 @@ class CampaignMapping extends Model implements HasMedia
      */
     public function publisher(): BelongsTo
     {
-        return $this->belongsTo(Publisher::class);
+        return $this->belongsTo(User::class,'publisher_id','id');
     }
 
     /**
@@ -61,7 +61,7 @@ class CampaignMapping extends Model implements HasMedia
      */
     public function publisherAsset(): BelongsTo
     {
-        return $this->belongsTo(PublisherAsset::class);
+        return $this->belongsTo(PublisherAsset::class,'publisher_asset_id','id');
     }
 
     public function publisherZone(): BelongsTo

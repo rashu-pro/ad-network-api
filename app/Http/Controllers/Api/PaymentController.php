@@ -8,6 +8,8 @@ use App\Events\CampaignPublished;
 use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Models\Advertiser;
+use App\Models\Campaign;
+use App\Models\User;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,13 +21,13 @@ class PaymentController extends Controller
     use ApiResponse;
     public function advertiserSubscription(Request $request)
     {
-        $user = Auth::guard('advertiser')->user();
+        $user = Auth::guard('api')->user();
         $user->update([
             'subscription_id' => Str::uuid(),
             'subscription_expires_at' => now()->addDays(365),
         ]);
-        $advertiser = Advertiser::findOrFail($user->id);
-//        $remoteAdvertiser  = SecureApi::getAdvertiser($advertiser->secure_api_id);
+        $advertiser = User::findOrFail($user->id);
+//        $remoteAdvertiser  = SecureApi::getUser($advertiser->secure_api_id);
         // Payload data
         $payload = [
             'advertiserName' => 'Advertiser ' . $advertiser->id,
@@ -47,24 +49,23 @@ class PaymentController extends Controller
         return $this->successResponse('Advertiser subscription successful');
     }
 
-    public function campaignPayment($id)
+    public function campaignPayment(Campaign $campaign)
     {
-        $user = Auth::guard('advertiser')->user();
-        $campaign = $user->campaigns()->where('id', $id)->first();
+        $user = Auth::guard('api')->user();
         $campaign->update([
-            'payment_status' => PaymentStatus::PAID,
+            'payment_status' => PaymentStatus::PAID->value,
         ]);
         $campaign->refresh();
         $mappings = $campaign->campaignMappings()->get();
         if($campaign->payment_status == PaymentStatus::PAID){
             foreach($mappings as $mapping){
                 $mapping->update([
-                    'status' => PublisherCampaignStatus::APPROVE,
+                    'status' => PublisherCampaignStatus::APPROVE->value,
                 ]);
                 $mapping->refresh();
             }
         }
-        dispatch(new CampaignPublished($campaign));
+        event(new CampaignPublished($campaign));
         return $this->successResponse('Payment successful');
     }
 }

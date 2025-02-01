@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Campaign;
 use App\Models\Zone;
+use App\Policies\CampaignPolicy;
 use App\Repositories\Eloquent\AssetRepository;
 use App\Repositories\Eloquent\AssetValuationRepository;
 use App\Repositories\Eloquent\CampaignMappingRepository;
@@ -14,6 +16,7 @@ use App\Repositories\Interfaces\CampaignMappingRepositoryInterface;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
 use App\Repositories\Interfaces\ZoneRepositoryInterface;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -35,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(Campaign::class, CampaignPolicy::class);
         ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
             return config('app.frontend_url')."/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
         });
