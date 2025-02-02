@@ -181,8 +181,8 @@ class UserLoginController extends Controller
 
     protected function createTokens(User $user)
     {
-        $accessTokenExpiresAt = Carbon::now()->addMinutes(config('sanctum.ac_expiration'));
-        $refreshTokenExpiresAt = Carbon::now()->addMinutes(config('sanctum.rt_expiration'));
+        $accessTokenExpiresAt = Carbon::now()->addHours(config('sanctum.ac_expiration'));
+        $refreshTokenExpiresAt = Carbon::now()->addHours(config('sanctum.rt_expiration'));
 
         $accessToken = $user->createToken('access_token', [TokenAbility::ACCESS_API->value], $accessTokenExpiresAt)->plainTextToken;
         $refreshToken = $user->createToken('refresh_token', [TokenAbility::ISSUE_ACCESS_TOKEN->value], $refreshTokenExpiresAt)->plainTextToken;
