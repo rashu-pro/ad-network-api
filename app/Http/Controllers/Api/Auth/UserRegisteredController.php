@@ -27,12 +27,12 @@ class UserRegisteredController extends Controller
         ]);
 
         if($request['isAdvertiser']){
-            $advertiserRole = app(Role::class)->findOrCreate(RolesEnum::ADVERTISER->value,'api');
+            $advertiserRole = Role::findByName(RolesEnum::ADVERTISER->value);
             $user->assignRole($advertiserRole);
             event(new AdvertiserRegistered($user));
         }
         if($request['isAdPublisher']){
-            $publisherRole = app(Role::class)->findOrCreate(RolesEnum::PUBLISHER->value,'api');
+            $publisherRole = Role::findByName(RolesEnum::PUBLISHER->value);
             $user->assignRole($publisherRole);
         }
         return $this->successResponse('User created successfully.', [
