@@ -30,59 +30,17 @@ class SecureApiService
 
         throw new SecureApiException("Unable to create advertiser", $response->status(),$response->body());
     }
-    /**
-     * @throws \Exception
-     */
-    public function createAdvertiser(array $data): \App\HttpModels\SecureApiUser
-    {
-        $advertiserData = new Advertiser($data);
-
-        $response = Http::post("{$this->base_url}/ad-network/register", $advertiserData->toArray());
-        if ($response->ok()) {
-            return Advertiser::fromApiResponse($response->json());
-        }
-
-        throw new SecureApiException("Unable to create advertiser", $response->status(),$response->body());
-    }
 
     /**
      * @throws SecureApiException
      */
-    public function getAdvertiser(string $id): array
+    public function getUser(string $id): array
     {
         $response = Http::get("{$this->base_url}/ad-network/advertiser/{$id}");
         if ($response->ok()) {
-            return Advertiser::fromApiResponse($response->json())->toArray();
+            return SecureApiUser::fromApiResponse($response->json())->toArray();
         }
-        throw new SecureApiException("Failed to fetch advertiser", $response->status(),$response->body());
-    }
-
-    /**
-     * @throws SecureApiException
-     */
-    public function createPublisher(array $data): \App\HttpModels\SecureApiUser
-    {
-        $advertiserData = new Publisher($data);
-
-        $response = Http::post("{$this->base_url}/ad-network/register", $advertiserData->toArray());
-        if ($response->ok()) {
-            return Publisher::fromApiResponse($response->json());
-        }
-
-        throw new SecureApiException("Unable to create advertiser", $response->status(),$response->body());
-    }
-
-    /**
-     * @throws SecureApiException
-     */
-    public function getPublisher(string $id): array
-    {
-        $response = Http::get("{$this->base_url}/ad-network/ad-publisher/{$id}");
-        if ($response->ok()) {
-            return Advertiser::fromApiResponse($response->json())->toArray();
-        }
-
-        throw new SecureApiException("Failed to fetch advertiser", $response->status(),$response->body());
+        throw new SecureApiException("Failed to fetch user", $response->status(),$response->body());
     }
 
     /**

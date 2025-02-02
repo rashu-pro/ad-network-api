@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('advertisers', function (Blueprint $table) {
-            $table->renameColumn('advertiser_email', 'email');
+        Schema::table('users', function (Blueprint $table) {
+            $table->integer('adserver_id')->nullable();
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('advertisers', function (Blueprint $table) {
-            $table->renameColumn('email', 'advertiser_email');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('adserver_id');
         });
     }
 };

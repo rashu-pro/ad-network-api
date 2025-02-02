@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+    # PHP Service
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: laravel_app
+        restart: unless-stopped
+        working_dir: /var/www/html
+        volumes:
+            - .:/var/www/html
+        networks:
+            - laravel_network
+        depends_on:
+            - db
+            - redis
+
+    # Web Server (Nginx)
+    webserver:
+        image: nginx:alpine
+        container_name: laravel_webserver
+        restart: unless-stopped
+        ports:
+            - "8000:80"
+        volumes:
+            - .:/var/www/html
+            - ./docker/nginx:/etc/nginx/conf.d
+        networks:
+            - laravel_network
+        depends_on:
+            - app
+
+    # MySQL Database
+    db:
+        image: mysql:8.0
+        container_name: laravel_db
+        restart: unless-stopped
+        environment:
+            MYSQL_DATABASE: ms_ad_network_api
+            MYSQL_ROOT_PASSWORD: secret
+        volumes:
+            - dbdata:/var/lib/mysql
+        ports:
+            - "3306:3306"
+        networks:
+            - laravel_network
+
+    # Redis
+    redis:
+        image: redis:alpine
+        container_name: laravel_redis
+        restart: unless-stopped
+        networks:
+            - laravel_network
+
+volumes:
+    dbdata:
+
+networks:
+    laravel_network:
+        driver: bridge

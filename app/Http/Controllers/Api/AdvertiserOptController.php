@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\CampaignStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\RolesEnum;
+use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AssetZoneResource;
 use App\Http\Resources\CampaignResource;
@@ -11,6 +13,7 @@ use App\Models\Campaign;
 use App\Models\CampaignMapping;
 use App\Models\Publisher;
 use App\Models\PublisherAsset;
+use App\Models\User;
 use App\Models\Zone;
 use App\Services\AdvertiserService;
 use App\Traits\ApiResponse;
@@ -133,8 +136,8 @@ class AdvertiserOptController extends Controller
     public function allCampaigns()
     {
         try{
-            $user = Auth::guard('advertiser')->user();
-            $campaigns = CampaignResource::collection($this->advertiserService->allCampaigns($user->id));
+            $user = Auth::guard('api')->user();
+            $campaigns = CampaignResource::collection($user->campaigns()->get());
             return $this->successResponse(message: 'All campaigns',data: $campaigns);
         }catch (\Exception $e){
             return $this->errorResponse($e->getMessage());
@@ -285,10 +288,10 @@ class AdvertiserOptController extends Controller
         $request->validate([
             'publisher_ids' => 'required|array',
         ]);
-        $user = Auth::guard('advertiser')->user();
+        $user = Auth::guard('api')->user();
 
         $campaignData = $request->only([
-            'campaign_name', 'target_url', 'is_draft', 'start_date', 'end_date',
+            'campaign_name', 'target_url', 'start_date', 'end_date',
         ]);
         $campaignData['advertiser_id'] = $user->id;
         $campaignData['advertiser_adserver_id'] = $user->adserver_id;
@@ -300,7 +303,9 @@ class AdvertiserOptController extends Controller
         if(($days * 24) < $minDuration){
             return $this->errorResponse('You have to run ad for at least '.$minDuration.' Hours');
         }
-        $publishersData = Publisher::whereIn('id', $request->publisher_ids)
+        $publishersData = User::whereHas('roles', function ($query) {
+                $query->where('name', RolesEnum::PUBLISHER->value);
+            })->whereIn('id', $request->publisher_ids)
             ->has('assets')
             ->with('assets') // Eager load assets relationship
             ->get()
@@ -331,10 +336,9 @@ class AdvertiserOptController extends Controller
         return $this->successResponse(message: 'created successfully', data: new CampaignResource($campaign));
     }
 
-    public function getUniqueZones($id)
+    public function getUniqueZones(Campaign $campaign)
     {
-        $user = Auth::guard('advertiser')->user();
-        $campaign = $user->campaigns()->where('id',$id)->firstOrFail();
+        $user = Auth::guard('api')->user();
         $zones = $campaign->mappings()
             ->select('publisher_zone_id', 'publisher_id')
             ->distinct() // Ensure unique rows
@@ -472,15 +476,14 @@ class AdvertiserOptController extends Controller
             )
         ]
     )]
-    public function uploadCampaign($id, Request $request)
+    public function uploadCampaign(Campaign $campaign, Request $request)
     {
         $request->validate([
             'banner' => 'required|file|mimes:jpg,jpeg,png',
             'publisher_ids' => 'required|array|min:1', // Ensures at least one publisher ID is provided
-            'publisher_ids.*' => 'required|integer|exists:publishers,id',
+            'publisher_ids.*' => 'required|integer|exists:users,id',
             'zone_id' => 'required|integer|exists:publisher_assets,zone_id',
         ]);
-        $campaign = Campaign::findOrFail($id);
         $mappings = $campaign->mappings()->whereIn('publisher_id',$request->publisher_ids)
             ->where('publisher_zone_id',$request->zone_id)
             ->get();
@@ -643,28 +646,33 @@ class AdvertiserOptController extends Controller
             )
         ]
     )]
-    public function updateCampaign($id, Request $request)
+    public function updateCampaign(Campaign $campaign, Request $request)
     {
-
-        $this->advertiserService->updateCampaign($id, $request->only(
+        $campaign->update($request->only(
             'campaign_name', 'target_url', 'is_draft', 'status'
         ));
-        return $this->successResponse(message: 'updated successfully', data: new CampaignResource(Campaign::findOrFail($id)));
+        return $this->successResponse(message: 'updated successfully', data: new CampaignResource($campaign));
     }
 
     public function availablePublishers()
     {
-        $data = Publisher::with(['assets.asset'])
-        ->orderBy('created_at', 'desc')
+        $data = User::whereHas('roles', function ($query) {
+                $query->where('name', RolesEnum::PUBLISHER->value);
+            })
+            ->with(['assets.asset'])
+            ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($publisher) {
+//                $securePublisher = SecureApi::getUser($publisher->secure_api_id);
                 return [
                     'id' => $publisher->id,
+                    'company_name' => 'test',
                     'email' => $publisher->email,
                     'assets' => $publisher->assets->map(function ($publisherAsset) {
                         return [
                             'id' => $publisherAsset->asset->id ?? null,
                             'name' => $publisherAsset->asset->name ?? null,
+                            'slug' => $publisherAsset->asset->slug ?? null,
                             'type' => $publisherAsset->asset->type ?? null,
                         ];
                     }),
@@ -674,10 +682,8 @@ class AdvertiserOptController extends Controller
         return $this->successResponse('All available publishers',$data);
     }
 
-    public function getCampaign($id)
+    public function getCampaign(Campaign $campaign)
     {
-        $user = Auth::guard('advertiser')->user();
-        $campaign = $user->campaigns()->find($id);
         return $this->successResponse('All campaign', new CampaignResource($campaign));
     }
 

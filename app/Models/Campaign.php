@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Policies\CampaignPolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,7 +35,6 @@ class Campaign extends Model implements HasMedia
         'status' => CampaignStatus::class,
     ];
 
-
     /**
      * Get the transactions for the campaign.
      *
@@ -62,7 +62,7 @@ class Campaign extends Model implements HasMedia
 
     public function advertiser(): BelongsTo
     {
-        return $this->belongsTo(Advertiser::class, 'advertiser_id', 'id');
+        return $this->belongsTo(User::class, 'advertiser_id', 'id');
     }
 
 }

@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('advertisers', function (Blueprint $table) {
-            $table->unsignedBigInteger('subscription_plan_id')->nullable()->change();
+        Schema::table('assets', function (Blueprint $table) {
+            $table->string('slug')->unique()->after('name')->nullable();
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('advertisers', function (Blueprint $table) {
-            $table->unsignedBigInteger('subscription_plan_id')->nullable(false)->change();
+        Schema::table('assets', function (Blueprint $table) {
+            $table->dropColumn('slug');
         });
     }
 };

@@ -22,9 +22,6 @@ class CreatePublisherAssetsTable extends Migration
             $table->integer('min_duration_in_hour');
             $table->decimal('price_per_hour', 8, 2);
             $table->timestamps();
-
-            $table->foreign('publisher_id')->references('id')->on('publishers')->onDelete('cascade');
-            $table->foreign('asset_id')->references('id')->on('assets')->onDelete('cascade');
         });
     }
 

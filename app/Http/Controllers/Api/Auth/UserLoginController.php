@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
+use App\Enums\RolesEnum;
 use App\Enums\TokenAbility;
 use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\AdvertiserLoginRequest;
 use App\Models\Advertiser;
+use App\Models\User;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
 use OpenApi\Attributes as OA;
-class AdvertiserLoginController extends Controller
+class UserLoginController extends Controller
 {
     use ApiResponse;
 
@@ -82,10 +84,10 @@ class AdvertiserLoginController extends Controller
                 'password' => $request->password
             ]);
             $user = json_decode($res['user']);
-           $localUser = Advertiser::firstOrCreate(
+           $localUser = User::firstOrCreate(
                ['email' => $user->email],
                [
-                   'secure_api_key' => $user->userKey
+                   'secure_api_id' => $user->userKey
                ]
            );
             return $this->createTokens($localUser);
@@ -177,14 +179,14 @@ class AdvertiserLoginController extends Controller
         }
     }
 
-    protected function createTokens(Advertiser $user)
+    protected function createTokens(User $user)
     {
         $accessTokenExpiresAt = Carbon::now()->addMinutes(config('sanctum.ac_expiration'));
         $refreshTokenExpiresAt = Carbon::now()->addMinutes(config('sanctum.rt_expiration'));
 
         $accessToken = $user->createToken('access_token', [TokenAbility::ACCESS_API->value], $accessTokenExpiresAt)->plainTextToken;
         $refreshToken = $user->createToken('refresh_token', [TokenAbility::ISSUE_ACCESS_TOKEN->value], $refreshTokenExpiresAt)->plainTextToken;
-
+//        $secureApiUser = SecureApi::getUser($user->secure_api_id);
         return $this->successResponse('Logged in successfully.', [
             'id' => $user->id,
             'email' => $user->email,
@@ -194,6 +196,8 @@ class AdvertiserLoginController extends Controller
             'refresh_token' => $refreshToken,
             'refresh_token_expires_at' => $refreshTokenExpiresAt,
             'token_type' => 'Bearer',
+            'isAdvertiser' => $user->hasRole(RolesEnum::ADVERTISER->value,'api'),
+            'isPublisher' => $user->hasRole(RolesEnum::PUBLISHER->value,'api'),
         ]);
     }
 }

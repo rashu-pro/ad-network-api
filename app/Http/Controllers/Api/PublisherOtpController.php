@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Enums\CampaignStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PublisherCampaignStatus;
+use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AssetZoneResource;
 use App\Http\Resources\CampaignResource;
 use App\Http\Resources\PublisherAssetResource;
 use App\HttpModels\Publisher;
+use App\Models\Asset;
 use App\Models\Campaign;
 use App\Models\CampaignMapping;
 use App\Models\PublisherAsset;
@@ -112,9 +114,9 @@ class PublisherOtpController extends Controller
             )
         ]
     )]
-    public function assets($id)
+    public function assets()
     {
-        $user = \App\Models\Publisher::findOrFail($id);
+        $user = Auth::guard('api')->user();
         return $this->successResponse('Publisher assets',PublisherAssetResource::collection($user->assets()->get()));
     }
 
@@ -200,9 +202,9 @@ class PublisherOtpController extends Controller
             )
         ]
     )]
-    public function availableZones($asset_id)
+    public function availableZones(Asset $asset)
     {
-        $zones = $this->asr->find($asset_id)->zones()->get();
+        $zones = $asset->zones()->get();
         return $this->successResponse('Available zones', AssetZoneResource::collection($zones));
     }
 
@@ -372,7 +374,7 @@ class PublisherOtpController extends Controller
             'price_per_hour' => 'required|numeric',
             'url' => 'nullable|string',
         ]);
-        $user = Auth::guard('publisher')->user();
+        $user = Auth::guard('api')->user();
         $data = $request->only(['asset_id','min_duration_in_hour','price_per_hour','url', 'zone_id']);
         $validator = $this->asrv->validateAsset($request->asset_id,$request->min_population,$request->max_population ?? null);
         $asset = $this->asr->find($data['asset_id']);
@@ -390,12 +392,14 @@ class PublisherOtpController extends Controller
             return $this->errorResponse('Duration is not acceptable for the mentioned population');
         }
 
+//        $securePublisher = SecureApi::getUser($user->secure_api_id);
+
         // Payload data
         $payload = [
             'agencyId' => 1,
             'publisherName' => $data['url'],
             'website' => $data['url'],
-            'contactName' => $user->name,
+            'contactName' => 'test',
             'emailAddress' => $user->email,
         ];
 
@@ -513,7 +517,7 @@ class PublisherOtpController extends Controller
     )]
     public function allCampaigns()
     {
-        $user = Auth::guard('publisher')->user();
+        $user = Auth::guard('api')->user();
         $mappings = CampaignMapping::where('publisher_id',$user->id)->pluck('campaign_id')->toArray();
         return $this->successResponse('All campaigns',CampaignResource::collection(Campaign::whereIn('id',$mappings)->where('is_draft',false)->get()));
     }
