@@ -25,6 +25,7 @@ class SecureApiUser implements HttpModel
     {
         // Base validation rules
         $rules = [
+            'email' => 'required|email|max:255|unique:users,email',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'business_name' => 'required|string|max:255',
@@ -43,24 +44,24 @@ class SecureApiUser implements HttpModel
             'isAdvertiser' => ['required'],
             'isAdPublisher' => ['required']
         ];
-        if ($data['isAdvertiser'] === true && $data['isAdPublisher'] === true) {
-            // Check uniqueness in both tables
-            $rules['email'] = [
-                'required',
-                'email',
-                'max:255',
-                function ($attribute, $value, $fail) {
-                    if (DB::table('advertisers')->where('email', $value)->exists() ||
-                        DB::table('publishers')->where('email', $value)->exists()) {
-                        $fail('The email has already been taken in either advertisers or publishers.');
-                    }
-                }
-            ];
-        } elseif ($data['isAdvertiser'] === true) {
-            $rules['email'] = 'required|email|max:255|unique:advertisers,email';
-        } else {
-            $rules['email'] = 'required|email|max:255|unique:publishers,email';
-        }
+//        if ($data['isAdvertiser'] === true && $data['isAdPublisher'] === true) {
+//            // Check uniqueness in both tables
+//            $rules['email'] = [
+//                'required',
+//                'email',
+//                'max:255',
+//                function ($attribute, $value, $fail) {
+//                    if (DB::table('advertisers')->where('email', $value)->exists() ||
+//                        DB::table('publishers')->where('email', $value)->exists()) {
+//                        $fail('The email has already been taken in either advertisers or publishers.');
+//                    }
+//                }
+//            ];
+//        } elseif ($data['isAdvertiser'] === true) {
+//            $rules['email'] = 'required|email|max:255|unique:advertisers,email';
+//        } else {
+//            $rules['email'] = 'required|email|max:255|unique:publishers,email';
+//        }
 
         // Add rule for secure_api_id (companyKey) if required
         if ($requireCompanyKey) {

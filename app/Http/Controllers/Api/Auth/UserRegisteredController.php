@@ -25,12 +25,13 @@ class UserRegisteredController extends Controller
             'secure_api_id' => $secureApiUser['secure_api_id'],
             'email' => $secureApiUser['contactInfo']['email']
         ]);
-        if($secureApiUser['isAdvertiser']){
+
+        if($request['isAdvertiser']){
             $advertiserRole = app(Role::class)->findOrCreate(RolesEnum::ADVERTISER->value,'api');
             $user->assignRole($advertiserRole);
-            dispatch(new AdvertiserRegistered($user));
+            event(new AdvertiserRegistered($user));
         }
-        if($user['isAdPublisher']){
+        if($request['isAdPublisher']){
             $publisherRole = app(Role::class)->findOrCreate(RolesEnum::PUBLISHER->value,'api');
             $user->assignRole($publisherRole);
         }

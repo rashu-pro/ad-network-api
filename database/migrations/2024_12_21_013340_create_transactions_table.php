@@ -21,7 +21,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('campaign_id')->references('id')->on('campaigns')->onDelete('set null');
-            $table->foreign('advertiser_id')->references('id')->on('advertisers')->onDelete('set null');
+//            $table->foreign('advertiser_id')->references('id')->on('advertisers')->onDelete('set null');
         });
     }
 

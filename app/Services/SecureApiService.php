@@ -48,7 +48,7 @@ class SecureApiService
      */
     public function login(array $data)
     {
-        $response = Http::asForm()->post("https://secure-api.net/api/v1/auth/token", [
+        $response = Http::asForm()->post("https://alpha.secure-api.dev/api/v1/auth/token", [
             'grant_type' => 'password',
             'username' => $data['username'],
             'password' => $data['password'],
@@ -57,7 +57,7 @@ class SecureApiService
             return $response->json();
         }
 
-        throw new SecureApiException("Failed to fetch advertiser", $response->status(),$response->body());
+        throw new SecureApiException("Failed to fetch user", $response->status(),$response->body());
     }
 
 }
