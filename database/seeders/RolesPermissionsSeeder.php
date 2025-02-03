@@ -28,7 +28,7 @@ class RolesPermissionsSeeder extends Seeder
         $writeNote = Permission::firstOrCreate(['name' => 'write campaign note', 'guard_name' => 'api']);
         $viewPublishedCampaigns = Permission::firstOrCreate(['name' => 'view published campaigns', 'guard_name' => 'api']);
         $createAsset = Permission::firstOrCreate(['name' => 'create asset', 'guard_name' => 'api']);
-        $setAsset = Permission::firstOrCreate(['name' => 'create asset', 'guard_name' => 'api']);
+        $setAsset = Permission::firstOrCreate(['name' => 'set asset', 'guard_name' => 'api']);
         $updateAsset = Permission::firstOrCreate(['name' => 'update asset', 'guard_name' => 'api']);
 
         // Assign permissions to Advertiser
@@ -43,7 +43,7 @@ class RolesPermissionsSeeder extends Seeder
         // Assign permissions to Publisher
         $publisherRole->givePermissionTo([
             'create asset',
-            'create asset',
+            'set asset',
             'update asset',
             'update campaign status',
             'write campaign note',

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\CampaignStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PublisherCampaignStatus;
 use App\Events\CampaignPublished;
@@ -54,6 +55,8 @@ class PaymentController extends Controller
         $user = Auth::guard('api')->user();
         $campaign->update([
             'payment_status' => PaymentStatus::PAID->value,
+            'is_draft' => false,
+            'status' => CampaignStatus::PUBLISH->value
         ]);
         $campaign->refresh();
         $mappings = $campaign->campaignMappings()->get();
