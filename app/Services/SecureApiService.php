@@ -3,8 +3,6 @@
 namespace App\Services;
 
 use App\Exceptions\SecureApiException;
-use App\HttpModels\Advertiser;
-use App\HttpModels\Publisher;
 use App\HttpModels\SecureApiUser;
 use Illuminate\Support\Facades\Http;
 

@@ -39,17 +39,21 @@ class CampaignResource extends JsonResource
                         $asset = $mapping->publisherAsset; // Get asset details from mapping
                         return [
                             'id' => $asset->id,
+                            'mapping_id' => $mapping->id,
                             'name' => $asset->asset->name,
                             'price_per_hour' => $asset->price_per_hour,
                             'calculated_price' => $mapping->calculated_price,
                             'start_date' => $mapping->start_date,
                             'end_date' => $mapping->end_date,
                             'zone_id' => $mapping->publisher_zone_id,
+                            'zone_width' => $mapping->publisherZone->width,
+                            'zone_height' => $mapping->publisherZone->height,
                             'zone_adserver_id' => $mapping->publisher_zone_adserver_id,
                             'campaign_adserver_id' => $mapping->campaign_adserver_id,
                             'url' => $mapping->publisherAsset->url,
                             'target_url' => $mapping->campaign->target_url,
                             'is_active' => $mapping->is_active,
+                            'note' => $mapping->notes,
                             'banner' => $mapping->hasMedia('banner') ? $mapping->getFirstMedia('banner')->getUrl() : '#'
                         ];
                     })->toArray(),

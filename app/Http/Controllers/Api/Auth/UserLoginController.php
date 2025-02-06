@@ -83,7 +83,7 @@ class UserLoginController extends Controller
                 'username' => $request->email,
                 'password' => $request->password
             ]);
-            $user = json_decode($res['user']);
+           $user = json_decode($res['user']);
            $localUser = User::firstOrCreate(
                ['email' => $user->email],
                [

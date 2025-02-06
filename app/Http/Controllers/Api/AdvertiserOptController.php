@@ -2,17 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\CampaignStatus;
-use App\Enums\PaymentStatus;
 use App\Enums\RolesEnum;
-use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\AssetZoneResource;
 use App\Http\Resources\CampaignResource;
 use App\Models\Campaign;
 use App\Models\CampaignMapping;
-use App\Models\Publisher;
-use App\Models\PublisherAsset;
 use App\Models\User;
 use App\Models\Zone;
 use App\Services\AdvertiserService;
@@ -25,6 +19,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
+
 class AdvertiserOptController extends Controller
 {
     use ApiResponse;
@@ -685,6 +680,36 @@ class AdvertiserOptController extends Controller
     public function getCampaign(Campaign $campaign)
     {
         return $this->successResponse('All campaign', new CampaignResource($campaign));
+    }
+
+    public function reuploadToAsset(CampaignMapping $campaignMapping, Request $request)
+    {
+        $request->validate([
+            'banner' => 'required|file|mimes:jpg,jpeg,png',
+        ]);
+        if($campaignMapping->hasMedia('banner')){
+            $campaignMapping->clearMediaCollection('banner');
+        }
+        $campaignMapping->addMedia($request->file('banner'))
+            ->withCustomProperties([
+                'publisher_id' => $campaignMapping->publisher_id,
+                'publisher_zone_id' => $campaignMapping->publisher_zone_id,
+                'publisher_asset_id' => $campaignMapping->publisher_asset_id,
+                'campaign_id' => $campaignMapping->id,
+            ])
+            ->preservingOriginal()
+            ->toMediaCollection('banner');
+        return $this->successResponse(message: 'uploaded successfully', data: [
+            'url' => $campaignMapping->getFirstMedia('banner')->getUrl()
+        ]);
+    }
+    public function publishInAsset(CampaignMapping $campaignMapping)
+    {
+        if($campaignMapping->is_active){
+            return $this->errorResponse(message: 'Campaign already published', status: 409);
+        }
+
+
     }
 
 }

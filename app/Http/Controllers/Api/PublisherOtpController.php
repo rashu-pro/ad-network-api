@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\CampaignStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PublisherCampaignStatus;
+use App\Exceptions\SecureApiException;
 use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AssetZoneResource;
@@ -634,7 +635,7 @@ class PublisherOtpController extends Controller
                 'campaign' => 'Campaign status is not published',
             ],status:422);
         }
-        $user = Auth::guard('publisher')->user();
+        $user = Auth::guard('api')->user();
         $campaignMappings = CampaignMapping::where('publisher_id',$user->id)->where('campaign_id',$campaignId)
             ->where('publisher_zone_id',$request->zone_id)
             ->get();
@@ -732,5 +733,35 @@ class PublisherOtpController extends Controller
         }
 
       return $this->successResponse(message: 'Campaign status is updated');
+    }
+
+    public function updateCampaignMappingStatus(CampaignMapping $campaignMapping, Request $request){
+        $request->validate([
+            'status' => 'required',
+            'notes' => 'nullable'
+        ]);
+        if($request->status != PublisherCampaignStatus::APPROVE->value){
+            //todo:: unlink zone from campaign
+            //todo:: change campaign_mapping status
+        }
+    }
+
+    public function getCampaignScript(CampaignMapping $campaignMapping)
+    {
+        $adZoneId = $campaignMapping->publisher_zone_adserver_id;
+        $payload = [
+            'code_type' => 'adjs'
+        ];
+        if($adZoneId){
+            $endpoint = env('AD_SERVER_BASE_URL').'/zon/'.$adZoneId.'/ic';
+            try{
+                $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint,$payload);
+                $code = $response->object()->invocation_code;
+                return $this->successResponse('Script generated',$code);
+            }catch (SecureApiException $err){
+                return $this->errorResponse($err->getMessage());
+            }
+        }
+        return $this->errorResponse('No zone AdServer id found');
     }
 }
