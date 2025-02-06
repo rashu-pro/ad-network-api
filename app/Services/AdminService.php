@@ -147,6 +147,15 @@ class AdminService
     }
 
     /**
+     * @param int $assetId
+     * @return Collection
+     */
+    public function allZonesByAssetId(int $assetId): Collection
+    {
+        return $this->zoneRepository->getZonesByAssetId($assetId);
+    }
+
+    /**
      * @param array $zoneData
      * @return Model
      * @throws ValidationException

@@ -42,6 +42,16 @@ class ZoneController extends Controller
     }
 
     /**
+     * @param int $assetId
+     * @return JsonResponse
+     */
+    public function zonesByAssetId(int $assetId): JsonResponse
+    {
+        $zones = $this->adminService->allZonesByAssetId($assetId);
+        return $this->successResponse('zones found', $zones);
+    }
+
+    /**
      * @param Request $request
      * @return JsonResponse
      * @throws \Illuminate\Validation\ValidationException

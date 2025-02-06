@@ -15,4 +15,11 @@ class ZoneRepository extends BaseRepository implements ZoneRepositoryInterface {
     {
         return $this->model->whereNull('deleted_at')->get();
     }
+
+    public function getZonesByAssetId($assetId): Collection
+    {
+        return $this->model->where('asset_id', $assetId)
+            ->whereNull('deleted_at')
+            ->get();
+    }
 }
