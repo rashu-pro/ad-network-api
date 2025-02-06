@@ -118,7 +118,7 @@ class PublisherOtpController extends Controller
     public function assets()
     {
         $user = Auth::guard('api')->user();
-        return $this->successResponse('Publisher assets',PublisherAssetResource::collection($user->assets()->get()));
+        return $this->successResponse('Publisher assets',PublisherAssetResource::collection($user->assets()->latest()->get()));
     }
 
     #[OA\Get(
