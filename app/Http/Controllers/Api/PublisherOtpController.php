@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\CampaignStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PublisherCampaignStatus;
+use App\Exceptions\SecureApiException;
 use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AssetZoneResource;
@@ -743,5 +744,24 @@ class PublisherOtpController extends Controller
             //todo:: unlink zone from campaign
             //todo:: change campaign_mapping status
         }
+    }
+
+    public function getCampaignScript(CampaignMapping $campaignMapping)
+    {
+        $adZoneId = $campaignMapping->publisher_zone_adserver_id;
+        $payload = [
+            'code_type' => 'adjs'
+        ];
+        if($adZoneId){
+            $endpoint = env('AD_SERVER_BASE_URL').'/zon/'.$adZoneId.'/ic';
+            try{
+                $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint,$payload);
+                $code = $response->object()->invocation_code;
+                return $this->successResponse('Script generated',$code);
+            }catch (SecureApiException $err){
+                return $this->errorResponse($err->getMessage());
+            }
+        }
+        return $this->errorResponse('No zone AdServer id found');
     }
 }

@@ -6,7 +6,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-        container_name: 7
+        container_name: laravel_app
         restart: unless-stopped
         working_dir: /var/www/html
         volumes:
