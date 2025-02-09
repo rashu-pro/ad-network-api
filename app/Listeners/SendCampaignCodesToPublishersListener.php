@@ -39,7 +39,7 @@ class SendCampaignCodesToPublishersListener
                 ];
 
                 // Send codes to the publisher's target URL
-                $response = Http::post("{$targetUrl}/wp-json/adserver/v1/zone-scripts/web", $payload);
+                $response = Http::post("{$targetUrl}/{$mappings->first()->publisherAsset->asset->webhook_path}", $payload);
 
                 if ($response->failed()) {
                     Log::error("Failed to send campaign codes", [
@@ -50,7 +50,7 @@ class SendCampaignCodesToPublishersListener
                         'body' => $response->body(),
                     ]);
                 }
-                Log::info('Send campaign codes to ' . $targetUrl.' for '.$publisherAssetId,$response->json());
+//                Log::info('Send campaign codes to ' . $targetUrl.' for '.$publisherAssetId,json_decode($response->json()));
             } catch (\Exception $e) {
                 Log::error("Error sending campaign codes", [
                     'publisher_asset_id' => $publisherAssetId,
