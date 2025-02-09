@@ -11,10 +11,10 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class GenerateCampaignCodes implements ShouldQueue, ShouldDispatchAfterCommit
+class GenerateCampaignCodes implements ShouldDispatchAfterCommit
 {
-    public $connection = 'redis';
-    public $queue = 'adserver';
+//    public $connection = 'database';
+//    public $queue = 'adserver';
 
     /**
      * Handle the event.

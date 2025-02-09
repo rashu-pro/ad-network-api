@@ -7,10 +7,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class SendCampaignCodesToPublishersListener implements ShouldQueue
+class SendCampaignCodesToPublishersListener
 {
-    public $connection = 'redis';
-    public $queue = 'adserver';
+//    public $connection = 'database';
+//    public $queue = 'adserver';
 
     /**
      * Handle the event.
@@ -20,7 +20,10 @@ class SendCampaignCodesToPublishersListener implements ShouldQueue
         $groupedMappings = $event->campaignMappings->groupBy('publisher_asset_id');
 
         foreach ($groupedMappings as $publisherAssetId => $mappings) {
-            $targetUrl = $mappings->first()->publisherAsset->target_url ?? null;
+            if($mappings->first()->publisherAsset->asset->type != 'online'){
+                continue;
+            }
+            $targetUrl = $mappings->first()->publisherAsset->url ?? null;
 
             if (!$targetUrl) {
                 Log::warning("No target URL found for publisher_asset_id: {$publisherAssetId}");
@@ -32,11 +35,11 @@ class SendCampaignCodesToPublishersListener implements ShouldQueue
             try {
                 $payload = [
                     'publisher_asset_id' => $publisherAssetId,
-                    'campaign_codes' => $codes,
+                    'zone_scripts' => $codes,
                 ];
 
                 // Send codes to the publisher's target URL
-                $response = Http::post("{$targetUrl}/ms-network-campaign-callback", $payload);
+                $response = Http::post("{$targetUrl}/wp-json/adserver/v1/zone-scripts/web", $payload);
 
                 if ($response->failed()) {
                     Log::error("Failed to send campaign codes", [
@@ -47,7 +50,7 @@ class SendCampaignCodesToPublishersListener implements ShouldQueue
                         'body' => $response->body(),
                     ]);
                 }
-                Log::info('Send campaign codes to ' . $targetUrl.' for '.$publisherAssetId);
+                Log::info('Send campaign codes to ' . $targetUrl.' for '.$publisherAssetId,$response->json());
             } catch (\Exception $e) {
                 Log::error("Error sending campaign codes", [
                     'publisher_asset_id' => $publisherAssetId,

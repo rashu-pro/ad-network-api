@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class AdServerService
@@ -32,11 +33,12 @@ class AdServerService
      */
     public function getCampaignEmbedsByAdZone($adZoneId)
     {
-        $endpoint = '/zon/'.$adZoneId.'/ic';
+        $endpoint = $this->getUrl('zon/'.$adZoneId.'/ic');
         $payload = [
             'code_type' => 'adjs'
         ];
         try {
+            Log::info('endpoint for '.$adZoneId.' '.$endpoint,$payload);
             $response = $this->httpClient->post($endpoint, $payload);
 
             if (!$response->successful()) {
@@ -46,7 +48,7 @@ class AdServerService
                 );
             }
 
-            return $response->$response->object()->invocation_code;
+            return $response->object()->invocation_code;
         } catch (ConnectionException $e) {
             throw new ConnectionException("Connection error: " . $e->getMessage(), 0, $e);
         }

@@ -12,10 +12,10 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-class PublishCampaignToAdserver implements ShouldQueue, ShouldDispatchAfterCommit
+class PublishCampaignToAdserver
 {
-    public $connection = 'redis';
-    public $queue = 'adserver';
+//    public $connection = 'database';
+//    public $queue = 'adserver';
 
     /**
      * Handle the event.

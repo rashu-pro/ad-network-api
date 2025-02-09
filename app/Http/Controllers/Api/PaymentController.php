@@ -67,7 +67,6 @@ class PaymentController extends Controller
                     'status' => PublisherCampaignStatus::APPROVE->value,
                 ]);
                 $mapping->refresh();
-                event(new SendCampaignCodesToPublishers($mapping));
             }
         }
 
