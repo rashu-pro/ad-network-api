@@ -40,9 +40,9 @@ class SendCampaignCodesToPublishersListener
 
                 // Send codes to the publisher's target URL
                 $response = Http::post("{$targetUrl}/{$mappings->first()->publisherAsset->asset->webhook_path}", $payload);
-
-                if ($response->failed()) {
-                    Log::error("Failed to send campaign codes", [
+                Log::info("Webhook Response for {$publisherAssetId} {$response->status()}: {$response->body()}");
+                if (!$response->ok()) {
+                    Log::error("Failed to send campaign codes for {$publisherAssetId}: {$response->body()}", [
                         'publisher_asset_id' => $publisherAssetId,
                         'payload' => $payload,
                         'target_url' => $targetUrl,
