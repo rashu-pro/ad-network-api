@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            $table->string('web_hook_uri')->nullable()->after('type');
+            $table->string('webhook_path')->nullable()->after('type');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            $table->dropColumn('web_hook_uri');
+            $table->dropColumn('webhook_path');
         });
     }
 };
