@@ -18,6 +18,7 @@ use App\Repositories\Interfaces\CampaignMappingRepositoryInterface;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
 use App\Repositories\Interfaces\ZoneRepositoryInterface;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Console\Scheduling\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 

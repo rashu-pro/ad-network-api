@@ -6,21 +6,16 @@ use App\Enums\PublisherCampaignStatus;
 use App\Events\CampaignPublished;
 use App\Models\CampaignMapping;
 use App\Models\Zone;
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-class PublishCampaignToAdserver
+class PublishCampaignToAdserver implements ShouldQueue, ShouldDispatchAfterCommit
 {
-    /**
-     * Create the event listener.
-     */
-    public function __construct()
-    {
-        //
-    }
+    public $connection = 'redis';
+    public $queue = 'adserver';
 
     /**
      * Handle the event.

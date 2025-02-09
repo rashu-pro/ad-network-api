@@ -19,3 +19,4 @@ class CampaignMappingPolicy
         return $user->hasRole(RolesEnum::PUBLISHER->value,'api') && $campaignMapping->publisher_id == $user->id;
     }
 }
+

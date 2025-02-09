@@ -6,14 +6,14 @@ use App\Enums\CampaignStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PublisherCampaignStatus;
 use App\Events\CampaignPublished;
-use App\Facades\SecureApi;
+use App\Events\SendCampaignCodesToPublishers;
 use App\Http\Controllers\Controller;
-use App\Models\Advertiser;
 use App\Models\Campaign;
 use App\Models\User;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -53,6 +53,7 @@ class PaymentController extends Controller
     public function campaignPayment(Campaign $campaign)
     {
         $user = Auth::guard('api')->user();
+        DB::beginTransaction();
         $campaign->update([
             'payment_status' => PaymentStatus::PAID->value,
             'is_draft' => false,
@@ -66,8 +67,11 @@ class PaymentController extends Controller
                     'status' => PublisherCampaignStatus::APPROVE->value,
                 ]);
                 $mapping->refresh();
+                event(new SendCampaignCodesToPublishers($mapping));
             }
         }
+
+        DB::commit();
         event(new CampaignPublished($campaign));
         return $this->successResponse('Payment successful');
     }
