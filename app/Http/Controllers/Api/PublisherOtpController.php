@@ -520,7 +520,7 @@ class PublisherOtpController extends Controller
     {
         $user = Auth::guard('api')->user();
         $mappings = CampaignMapping::where('publisher_id',$user->id)->pluck('campaign_id')->toArray();
-        return $this->successResponse('All campaigns',CampaignResource::collection(Campaign::whereIn('id',$mappings)->where('is_draft',false)->get()));
+        return $this->successResponse('All campaigns',CampaignResource::collection(Campaign::whereIn('id',$mappings)->where('is_draft',false)->latest()->get()));
     }
 
     #[OA\Post(

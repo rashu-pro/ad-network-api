@@ -132,7 +132,7 @@ class AdvertiserOptController extends Controller
     {
         try{
             $user = Auth::guard('api')->user();
-            $campaigns = CampaignResource::collection($user->campaigns()->get());
+            $campaigns = CampaignResource::collection($user->campaigns()->latest()->get());
             return $this->successResponse(message: 'All campaigns',data: $campaigns);
         }catch (\Exception $e){
             return $this->errorResponse($e->getMessage());
