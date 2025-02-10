@@ -514,7 +514,9 @@ class AdvertiserOptController extends Controller
         }
         Storage::delete('app/private/'.$tempPath);
         return $this->successResponse(message: 'uploaded successfully', data: [
-            'url' => $mappings->map(function ($mapping) {
+            'url' => $mappings->filter(function ($mapping){
+                return $mapping->hasMedia('banner');
+            })->map(function ($mapping) {
                 return  $mapping->getFirstMedia('banner')->getUrl();
             })->toArray()
         ]);

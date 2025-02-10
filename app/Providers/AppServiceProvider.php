@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Events\CampaignPublished;
+use App\Listeners\GenerateCampaignCodes;
+use App\Listeners\PublishCampaignToAdserver;
 use App\Models\Campaign;
 use App\Models\CampaignMapping;
-use App\Models\Zone;
 use App\Policies\CampaignMappingPolicy;
 use App\Policies\CampaignPolicy;
 use App\Repositories\Eloquent\AssetRepository;
@@ -18,6 +20,7 @@ use App\Repositories\Interfaces\CampaignMappingRepositoryInterface;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
 use App\Repositories\Interfaces\ZoneRepositoryInterface;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -45,5 +48,13 @@ class AppServiceProvider extends ServiceProvider
         ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
             return config('app.frontend_url')."/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
         });
+        Event::listen(
+            CampaignPublished::class,
+            PublishCampaignToAdserver::class
+        );
+        Event::listen(
+            CampaignPublished::class,
+            GenerateCampaignCodes::class
+        );
     }
 }
