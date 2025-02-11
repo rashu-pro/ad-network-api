@@ -376,9 +376,15 @@ class PublisherOtpController extends Controller
             'url' => 'nullable|string',
         ]);
         $user = Auth::guard('api')->user();
+        $asset = Asset::findOrFail($request->asset_id);
         $data = $request->only(['asset_id','min_duration_in_hour','price_per_hour', 'url', 'zone_id']);
         $secureApiUser = SecureApi::getUser($user->secure_api_id);
 //        $data['url'] = $request->url ? "{$request->url}?org_slug={$secureApiUser['companyKey']}": '';
+        $data['webhook_path'] = $request->url ? "{$request->url}/wp-json/adserver/v1/zone-scripts/web": '';
+        if($asset->slug != 'website' && $asset->type == 'online'){
+            $domain = $this->getDomainOnly($request->url);
+            $data['webhook_path'] = $domain ? "{$domain}/wp-json/adserver/v1/{$secureApiUser['secure_api_id']}/zone-scripts/{$asset->slug}": '';
+        }
         $validator = $this->asrv->validateAsset($request->asset_id,$request->min_population,$request->max_population ?? null);
         $asset = $this->asr->find($data['asset_id']);
 
@@ -415,6 +421,9 @@ class PublisherOtpController extends Controller
         $publisherAsset = $user->assets()->create($data);
         return $this->successResponse(message: "Asset added to the publisher",data: new PublisherAssetResource($publisherAsset));
     }
+
+    function getDomainOnly($url) {     $parsedUrl = parse_url($url);     return isset($parsedUrl['scheme'], $parsedUrl['host'])         ? "{$parsedUrl['scheme']}://{$parsedUrl['host']}" : null; }
+
 
     #[OA\Get(
         path: "/api/publisher/campaigns",
