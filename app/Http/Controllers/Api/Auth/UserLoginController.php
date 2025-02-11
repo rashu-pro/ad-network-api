@@ -189,6 +189,7 @@ class UserLoginController extends Controller
 //        $secureApiUser = SecureApi::getUser($user->secure_api_id);
         return $this->successResponse('Logged in successfully.', [
             'id' => $user->id,
+            'companyKey' => $user->secure_api_id,
             'email' => $user->email,
             'name' => $user->name,
             'access_token' => $accessToken,
