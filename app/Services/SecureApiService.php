@@ -6,6 +6,7 @@ use App\Enums\RolesEnum;
 use App\Exceptions\SecureApiException;
 use App\HttpModels\SecureApiUser;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class SecureApiService
@@ -36,17 +37,23 @@ class SecureApiService
      */
     public function getUser(string $id): array
     {
-        $user = User::where('secure_api_id',$id)->firstOrFail();
-        if($user->hasRole(RolesEnum::PUBLISHER)){
-            $response = Http::get("{$this->base_url}/ad-network/ad-publisher/{$id}");
-        }else{
-            $response = Http::get("{$this->base_url}/ad-network/advertiser/{$id}");
-        }
+        return Cache::remember("user_{$id}", now()->addDay(), function () use ($id) {
+            $user = User::where('secure_api_id', $id)->firstOrFail();
 
-        if ($response->ok()) {
-            return SecureApiUser::fromApiResponse($response->json())->toArray();
-        }
-        throw new SecureApiException("Failed to fetch user", $response->status(),$response->body());
+            // Determine URL based on user role
+            $url = $user->hasRole(RolesEnum::PUBLISHER)
+                ? "{$this->base_url}/ad-network/ad-publisher/{$id}"
+                : "{$this->base_url}/ad-network/advertiser/{$id}";
+
+            // Fetch user data from external API
+            $response = Http::get($url);
+
+            if ($response->ok()) {
+                return SecureApiUser::fromApiResponse($response->json())->toArray();
+            }
+
+            throw new SecureApiException("Failed to fetch user", $response->status(), $response->body());
+        });
     }
 
     /**
