@@ -45,6 +45,8 @@ Route::prefix('admin')->group(function () {
 Route::prefix('user')->group(function () {
     Route::post('/register', [UserRegisteredController::class, 'userCreate'])
         ->middleware('guest:api');
+    Route::post('/existing-secure-api-user-register', [UserRegisteredController::class, 'existingSecureApiUserCreate'])
+        ->middleware('guest:api');
     Route::post('auth/login',[UserLoginController::class,'login'])
         ->middleware('guest:api');
     Route::post('auth/get-access-token',[UserLoginController::class,'refresh'])
