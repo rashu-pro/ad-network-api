@@ -40,6 +40,27 @@ class UserRegisteredController extends Controller
         ]);
     }
 
+    public function existingSecureApiUserCreate(Request $request)
+    {
+        $secureApiUser = SecureApi::createExistingSecureApiUser($request->companySlug,$request->all())->toArray();
+        $user = User::create([
+            'secure_api_id' => $secureApiUser['secure_api_id'],
+            'email' => $secureApiUser['contactInfo']['email']
+        ]);
+        if($request['isAdvertiser']){
+            $advertiserRole = app(Role::class)->findOrCreate(RolesEnum::ADVERTISER->value,'api');
+            $user->assignRole($advertiserRole);
+            event(new AdvertiserRegistered($user));
+        }
+        if($request['isAdPublisher']){
+            $publisherRole = app(Role::class)->findOrCreate(RolesEnum::PUBLISHER->value,'api');
+            $user->assignRole($publisherRole);
+        }
+        return $this->successResponse('User created successfully.', [
+            'secure_api_id' => $user['secure_api_id'],
+        ]);
+    }
+
 //    /**
 //     * Handle an incoming registration request.
 //     *

@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\RolesEnum;
 use App\Exceptions\SecureApiException;
 use App\HttpModels\SecureApiUser;
+use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class SecureApiService
@@ -28,17 +31,42 @@ class SecureApiService
 
         throw new SecureApiException("Unable to create advertiser", $response->status(),$response->body());
     }
+    public function createExistingSecureApiUser(string $companySlug, array $data): \App\HttpModels\SecureApiUser
+    {
+        $userData = new SecureApiUser($data);
+        $payload = $userData->toArray();
+        $payload['companySlug'] = $companySlug;
+
+        $response = Http::post("{$this->base_url}/ad-network/register", $payload);
+        if ($response->ok()) {
+            return SecureApiUser::fromApiResponse($response->json());
+        }
+
+        throw new SecureApiException("Unable to create advertiser", $response->status(),$response->body());
+    }
 
     /**
      * @throws SecureApiException
      */
     public function getUser(string $id): array
     {
-        $response = Http::get("{$this->base_url}/ad-network/advertiser/{$id}");
-        if ($response->ok()) {
-            return SecureApiUser::fromApiResponse($response->json())->toArray();
-        }
-        throw new SecureApiException("Failed to fetch user", $response->status(),$response->body());
+        return Cache::remember("user_{$id}", now()->addDay(), function () use ($id) {
+            $user = User::where('secure_api_id', $id)->firstOrFail();
+
+            // Determine URL based on user role
+            $url = $user->hasRole(RolesEnum::PUBLISHER)
+                ? "{$this->base_url}/ad-network/ad-publisher/{$id}"
+                : "{$this->base_url}/ad-network/advertiser/{$id}";
+
+            // Fetch user data from external API
+            $response = Http::get($url);
+
+            if ($response->ok()) {
+                return SecureApiUser::fromApiResponse($response->json())->toArray();
+            }
+
+            throw new SecureApiException("Failed to fetch user", $response->status(), $response->body());
+        });
     }
 
     /**

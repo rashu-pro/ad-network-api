@@ -7,8 +7,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\UserRegisteredController;
 use App\Http\Controllers\Api\Auth\UserLoginController;
-use App\Http\Controllers\Api\Auth\PublisherRegisteredController;
-use App\Http\Controllers\Api\Auth\PublisherLoginController;
 use App\Http\Controllers\Api\Admin\AssetController;
 use App\Http\Controllers\Api\Admin\ZoneController;
 
@@ -44,6 +42,8 @@ Route::prefix('admin')->group(function () {
 });
 Route::prefix('user')->group(function () {
     Route::post('/register', [UserRegisteredController::class, 'userCreate'])
+        ->middleware('guest:api');
+    Route::post('/existing-secure-api-user-register', [UserRegisteredController::class, 'existingSecureApiUserCreate'])
         ->middleware('guest:api');
     Route::post('auth/login',[UserLoginController::class,'login'])
         ->middleware('guest:api');
