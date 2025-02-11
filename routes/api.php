@@ -7,8 +7,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\UserRegisteredController;
 use App\Http\Controllers\Api\Auth\UserLoginController;
-use App\Http\Controllers\Api\Auth\PublisherRegisteredController;
-use App\Http\Controllers\Api\Auth\PublisherLoginController;
 use App\Http\Controllers\Api\Admin\AssetController;
 use App\Http\Controllers\Api\Admin\ZoneController;
 

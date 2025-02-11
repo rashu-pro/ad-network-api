@@ -657,6 +657,7 @@ class AdvertiserOptController extends Controller
         $data = User::whereHas('roles', function ($query) {
                 $query->where('name', RolesEnum::PUBLISHER->value);
             })
+            ->whereHas('assets')
             ->with(['assets.asset'])
             ->orderBy('created_at', 'desc')
             ->get()
