@@ -378,7 +378,7 @@ class PublisherOtpController extends Controller
         $user = Auth::guard('api')->user();
         $data = $request->only(['asset_id','min_duration_in_hour','price_per_hour', 'zone_id']);
         $secureApiUser = SecureApi::getUser($user->secure_api_id);
-        $data['url'] = $request->url ? "{$request->url}?org_slug={$secureApiUser['companyKey']}": '';
+//        $data['url'] = $request->url ? "{$request->url}?org_slug={$secureApiUser['companyKey']}": '';
         $validator = $this->asrv->validateAsset($request->asset_id,$request->min_population,$request->max_population ?? null);
         $asset = $this->asr->find($data['asset_id']);
 
