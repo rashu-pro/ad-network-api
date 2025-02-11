@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\RolesEnum;
+use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CampaignResource;
 use App\Models\Campaign;
@@ -302,7 +303,7 @@ class AdvertiserOptController extends Controller
                 $query->where('name', RolesEnum::PUBLISHER->value);
             })->whereIn('id', $request->publisher_ids)
             ->has('assets')
-            ->with('assets') // Eager load assets relationship
+            ->with('assets')
             ->get()
             ->map(function ($publisher) use ($request,$user){
                 return $publisher->assets->map(function ($asset) use ($publisher,$request,$user) {
@@ -496,7 +497,7 @@ class AdvertiserOptController extends Controller
         }
         $tempPath = $request->file('banner')->store('temp');
         $bannerPath = storage_path('app/private/' . $tempPath);
-//        dd($bannerPath);
+
         foreach ($mappings as $mapping) {
             if($mapping->hasMedia('banner')){
                 $mapping->clearMediaCollection('banner');
@@ -660,10 +661,10 @@ class AdvertiserOptController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($publisher) {
-//                $securePublisher = SecureApi::getUser($publisher->secure_api_id);
+                $securePublisher = SecureApi::getUser($publisher->secure_api_id);
                 return [
                     'id' => $publisher->id,
-                    'company_name' => 'test',
+                    'company_name' => $securePublisher['businessName'],
                     'email' => $publisher->email,
                     'assets' => $publisher->assets->map(function ($publisherAsset) {
                         return [

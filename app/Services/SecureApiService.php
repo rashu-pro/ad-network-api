@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\RolesEnum;
 use App\Exceptions\SecureApiException;
 use App\HttpModels\SecureApiUser;
+use App\Models\User;
 use Illuminate\Support\Facades\Http;
 
 class SecureApiService
@@ -34,7 +36,13 @@ class SecureApiService
      */
     public function getUser(string $id): array
     {
-        $response = Http::get("{$this->base_url}/ad-network/advertiser/{$id}");
+        $user = User::where('secure_api_id',$id)->firstOrFail();
+        if($user->hasRole(RolesEnum::PUBLISHER)){
+            $response = Http::get("{$this->base_url}/ad-network/ad-publisher/{$id}");
+        }else{
+            $response = Http::get("{$this->base_url}/ad-network/advertiser/{$id}");
+        }
+
         if ($response->ok()) {
             return SecureApiUser::fromApiResponse($response->json())->toArray();
         }
