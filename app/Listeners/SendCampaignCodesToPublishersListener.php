@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\SendCampaignCodesToPublishers;
+use App\Models\CampaignMapping;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -17,20 +18,31 @@ class SendCampaignCodesToPublishersListener
      */
     public function handle(SendCampaignCodesToPublishers $event)
     {
-        $groupedMappings = $event->campaignMappings->groupBy('publisher_asset_id');
+        // Get unique publisher_asset_ids from the event's mappings
+        $publisherAssetIds = $event->campaignMappings->pluck('publisher_asset_id')->unique();
 
-        foreach ($groupedMappings as $publisherAssetId => $mappings) {
-            if($mappings->first()->publisherAsset->asset->type != 'online'){
+        foreach ($publisherAssetIds as $publisherAssetId) {
+            // Retrieve all mappings for this publisher_asset_id from the database
+            $mappings = CampaignMapping::where('publisher_asset_id', $publisherAssetId)->get();
+
+            if ($mappings->isEmpty()) {
+                Log::warning("No campaign mappings found for publisher_asset_id: {$publisherAssetId}");
                 continue;
             }
-            $targetUrl = $mappings->first()->publisherAsset->url ?? null;
 
+            // Ensure it's an online asset before proceeding
+            if ($mappings->first()->publisherAsset->asset->type != 'online') {
+                continue;
+            }
+
+            $targetUrl = $mappings->first()->publisherAsset->url ?? null;
             if (!$targetUrl) {
                 Log::warning("No target URL found for publisher_asset_id: {$publisherAssetId}");
                 continue;
             }
 
-            $codes = $mappings->pluck('code')->toArray();
+            // Get unique codes from all mappings for this publisher_asset_id
+            $codes = $mappings->pluck('code')->unique()->values()->toArray();
 
             try {
                 $payload = [
@@ -38,9 +50,11 @@ class SendCampaignCodesToPublishersListener
                     'zone_scripts' => $codes,
                 ];
 
-                // Send codes to the publisher's target URL
-                $response = Http::post("{$targetUrl}/{$mappings->first()->publisherAsset->asset->webhook_path}", $payload);
+                // Send data to the publisher's webhook URL
+                $response = Http::post("{$mappings->first()->publisherAsset->webhook_path}", $payload);
+
                 Log::info("Webhook Response for {$publisherAssetId} {$response->status()}: {$response->body()}");
+
                 if (!$response->ok()) {
                     Log::error("Failed to send campaign codes for {$publisherAssetId}: {$response->body()}", [
                         'publisher_asset_id' => $publisherAssetId,
@@ -50,7 +64,6 @@ class SendCampaignCodesToPublishersListener
                         'body' => $response->body(),
                     ]);
                 }
-//                Log::info('Send campaign codes to ' . $targetUrl.' for '.$publisherAssetId,json_decode($response->json()));
             } catch (\Exception $e) {
                 Log::error("Error sending campaign codes", [
                     'publisher_asset_id' => $publisherAssetId,

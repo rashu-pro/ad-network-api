@@ -118,7 +118,7 @@ class PublisherOtpController extends Controller
     public function assets()
     {
         $user = Auth::guard('api')->user();
-        return $this->successResponse('Publisher assets',PublisherAssetResource::collection($user->assets()->get()));
+        return $this->successResponse('Publisher assets',PublisherAssetResource::collection($user->assets()->latest()->get()));
     }
 
     #[OA\Get(
@@ -520,7 +520,7 @@ class PublisherOtpController extends Controller
     {
         $user = Auth::guard('api')->user();
         $mappings = CampaignMapping::where('publisher_id',$user->id)->pluck('campaign_id')->toArray();
-        return $this->successResponse('All campaigns',CampaignResource::collection(Campaign::whereIn('id',$mappings)->where('is_draft',false)->get()));
+        return $this->successResponse('All campaigns',CampaignResource::collection(Campaign::whereIn('id',$mappings)->where('is_draft',false)->latest()->get()));
     }
 
     #[OA\Post(
