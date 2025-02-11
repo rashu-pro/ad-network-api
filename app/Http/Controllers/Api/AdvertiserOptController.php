@@ -665,6 +665,8 @@ class AdvertiserOptController extends Controller
                 return [
                     'id' => $publisher->id,
                     'company_name' => $securePublisher['businessName'],
+                    'publisher_address' => $securePublisher['businessInfo']['address'],
+                    'logo' => $securePublisher['businessInfo']['logoUrl'],
                     'email' => $publisher->email,
                     'assets' => $publisher->assets->map(function ($publisherAsset) {
                         return [

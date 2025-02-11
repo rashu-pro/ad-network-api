@@ -35,6 +35,8 @@ class CampaignResource extends JsonResource
                 return [
                     'publisher_id' => $publisher->id,
                     'publisher_name' => $securePublisher['businessName'],
+                    'publisher_address' => $securePublisher['businessInfo']['address'],
+                    'logo' => $securePublisher['businessInfo']['logoUrl'],
                     'assets' => $groupedMappings->map(function ($mapping) {
                         $asset = $mapping->publisherAsset; // Get asset details from mapping
                         return [
