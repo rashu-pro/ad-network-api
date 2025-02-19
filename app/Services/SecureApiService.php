@@ -33,17 +33,29 @@ class SecureApiService
     }
     public function createExistingSecureApiUser(string $companySlug, array $data): \App\HttpModels\SecureApiUser
     {
-        $userData = new SecureApiUser($data);
-        $payload = $userData->toArray();
-        $payload['companySlug'] = $companySlug;
+        $payload = [
+            'companyKey'      => $data['companyKey'] ?? null,
+            'companySlug'     => $companySlug,
+            'isAdPublisher'   => $data['isAdPublisher'] ?? false,
+            'isAdvertiser'    => $data['isAdvertiser'] ?? false,
+            'addressLatitude' => $data['addressLatitude'] ?? 0,
+            'addressLongitude'=> $data['addressLongitude'] ?? 0,
+            'contactInfo'     => [
+                'name'  => $data['contactInfo']['name'] ?? '',
+                'email' => $data['contactInfo']['email'] ?? '',
+                'phone' => $data['contactInfo']['phone'] ?? ''
+            ]
+        ];
 
-        $response = Http::post("{$this->base_url}/ad-network/register", $payload);
+        $response = Http::post("{$this->base_url}/ad-network/register-existing-company", $payload);
+
         if ($response->ok()) {
-            return SecureApiUser::fromApiResponse($response->json());
+            return new SecureApiUser($response->json());
         }
 
-        throw new SecureApiException("Unable to create advertiser", $response->status(),$response->body());
+        throw new SecureApiException("Unable to create advertiser", $response->status(), $response->body());
     }
+
 
     /**
      * @throws SecureApiException
