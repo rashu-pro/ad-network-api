@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
 use OpenApi\Attributes as OA;
@@ -83,6 +84,7 @@ class UserLoginController extends Controller
                 'username' => $request->email,
                 'password' => $request->password
             ]);
+           Log::info('Login response: ', $res->body());
            $user = json_decode($res['user']);
            $localUser = User::firstOrCreate(
                ['email' => $user->email],

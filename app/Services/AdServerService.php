@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CampaignMapping;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
@@ -52,5 +53,25 @@ class AdServerService
         } catch (ConnectionException $e) {
             throw new ConnectionException("Connection error: " . $e->getMessage(), 0, $e);
         }
+    }
+
+    public function createZone(
+        int $publisher_id,
+        string $zone_name,
+        int $width,
+        int $height
+    ){
+        $payload = [
+            'publisherId' => $publisher_id,
+            'zoneName' => $zone_name,
+            'type' => 0,
+            'width' => $width,
+            'height' => $height,
+        ];
+        // Send GET request with Basic Auth
+        $endpoint = env('AD_SERVER_BASE_URL').'/zon/new';
+        $response = $this->httpClient->post($endpoint, $payload);
+        $zone_adserver_id = $response->object()->zoneId;
+        return $zone_adserver_id;
     }
 }
