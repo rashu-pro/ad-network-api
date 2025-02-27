@@ -4,6 +4,7 @@ use App\Enums\CampaignStatus;
 use App\Enums\PublisherCampaignStatus;
 use App\Enums\RolesEnum;
 use App\Enums\TokenAbility;
+use App\Events\CampaignPublished;
 use App\Http\Controllers\Api\Auth\AdminLoginController;
 use App\Models\Campaign;
 use App\Models\User;
@@ -202,6 +203,8 @@ Route::post('/update-campaign/{id?}', function (Request $request, int $id = null
             ->toMediaCollection('banner');
     }
     Storage::delete('app/private/'.$tempPath);
+
+    event(new CampaignPublished($campaign));
     return $this->successResponse(message: 'uploaded successfully', data: [
         'campaign_id' => $campaign->id,
         'url' => $mappings->filter(function ($mapping){
