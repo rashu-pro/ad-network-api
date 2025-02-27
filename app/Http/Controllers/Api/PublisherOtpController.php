@@ -794,7 +794,7 @@ class PublisherOtpController extends Controller
         $campaign = Campaign::find($id);
         if(!$campaign){
             $request->validate([
-                'zone_id' => 'required|integer|exists:publisher_assets,zone_id',
+                'zoneId' => 'required|integer|exists:publisher_assets,zone_id',
                 'banner' => 'required|file|mimes:jpg,jpeg,png',
                 'companyKey' => 'required'
             ]);
