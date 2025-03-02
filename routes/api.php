@@ -99,7 +99,7 @@ Route::get('company-asset/{companyKey}', function($companyKey){
    return response()->json([
         'success' => true,
         'message' => 'User found',
-        'data' => $user ?? [],
+        'data' => $user->assets->toArray() ?? [],
     ], 200);
 });
 
