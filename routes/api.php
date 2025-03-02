@@ -111,7 +111,7 @@ Route::prefix('external')->group(function (){
         $campaign = Campaign::find($id);
         if(!$campaign){
             $request->validate([
-                'asset_id' => 'required|integer|exists:publisher_assets,asset_id',
+                'asset_id' => 'required|integer|exists:publisher_assets,id',
                 'banner' => 'required|file|mimes:jpg,jpeg,png',
                 'companyKey' => 'required',
                 'campaign_name' => 'required',
@@ -155,7 +155,7 @@ Route::prefix('external')->group(function (){
             $campaignData['payment_status'] = \App\Enums\PaymentStatus::PAID;
             //campaign create
             $campaign = Campaign::create($campaignData);
-            $targetAsset = $user->assets->where('asset_id',$request->asset_id)->firstOrFail();
+            $targetAsset = $user->assets->find($request->asset_id);
 
             //mapping create
             \App\Models\CampaignMapping::create([
