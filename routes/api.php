@@ -7,7 +7,6 @@ use App\Enums\TokenAbility;
 use App\Events\CampaignPublished;
 use App\Http\Controllers\Api\Auth\AdminLoginController;
 use App\Models\Campaign;
-use App\Models\CampaignMapping;
 use App\Models\User;
 use App\Models\Zone;
 use App\Services\AdvertiserService;
@@ -16,7 +15,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\UserRegisteredController;
 use App\Http\Controllers\Api\Auth\UserLoginController;
@@ -26,8 +24,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use App\Traits\ApiResponse;
-use Symfony\Component\HttpKernel\Exception\HttpException;
-
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -157,7 +153,7 @@ Route::post('/update-campaign/{id?}', function (Request $request, int $id = null
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
                 'calculated_price' => 0,
-                'is_active' => true,
+                'is_active' => false,
                 'publisher_zone_id' => $asset->zone_id,
                 'publisher_zone_adserver_id' => $asset->zone_adserver_id,
                 'status' => PublisherCampaignStatus::APPROVE,
@@ -207,94 +203,7 @@ Route::post('/update-campaign/{id?}', function (Request $request, int $id = null
     }
     Storage::delete('app/private/'.$tempPath);
 
-    $campaignMappings = CampaignMapping::where('campaign_id',$campaign->id)
-        ->get();
-    foreach($campaignMappings as $campaignMapping){
-        if($campaignMapping->is_active){
-            continue;
-        }
-        $zone = Zone::findOrFail($campaignMapping->publisher_zone_id);
-        if($campaignMapping->status == PublisherCampaignStatus::APPROVE){
-            // Payload data
-            $payload = [
-                'publisherId' => (int)$campaignMapping->publisherAsset->publisher_adserver_id,
-                'zoneName' => $zone->zone_name.'_'.now(),
-                'type' => 0,
-                'width' => $zone->width,
-                'height' => $zone->height,
-            ];
-            // Send GET request with Basic Auth
-            $endpoint = env('AD_SERVER_BASE_URL').'/zon/new';
-            $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint, $payload);
-            $zone_adserver_id = $response->object()->zoneId;
-
-            $campaignMapping->update([
-                'publisher_zone_adserver_id' => $zone_adserver_id,
-            ]);
-            $campaignMapping->refresh();
-            // Payload data
-            $payload = [
-                'advertiserId' => (int)$campaign->advertiser->adserver_id,
-                'campaignName' => $campaign->campaign_name.'_'.now(),
-                'startDate' => $campaign->start_date,
-                'endDate' => $campaign->end_date,
-                'impressions' => 10000,
-                'revenueType' => 1,
-                'revenue' => 12.50,
-                'weight' => 1
-            ];
-
-            // Send GET request with Basic Auth
-            $endpoint = env('AD_SERVER_BASE_URL').'/cam/new';
-            $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint, $payload);
-
-            $campaign_adserver_id = $response->object()->campaignId;
-            $campaignMapping->update([
-                'campaign_adserver_id' => $campaign_adserver_id,
-            ]);
-            $campaignMapping->refresh();
-
-
-            if(!$campaignMapping->hasMedia('banner')){
-                Log::error('Campaign does not have banner for zone '.$zone->name);
-                return ;
-            }
-            $banner = $campaignMapping->getFirstMedia('banner');
-
-            // Payload data
-            $payload = [
-                'campaignId' => (int)$campaignMapping->campaign_adserver_id,
-                'bannerName' => $banner->name,
-                'storageType' => "url",
-                'imageURL' => $banner->getUrl(),
-                'url' => $campaign->target_url,
-                'width' => $campaignMapping->publisherZone->width,
-                'height' => $campaignMapping->publisherZone->height
-            ];
-
-            // Send GET request with Basic Auth
-            $endpoint = env('AD_SERVER_BASE_URL').'/bnn/new';
-            $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint, $payload);
-
-            $banner_adserver_id = $response->object()->bannerId;
-            $campaignMapping->update([
-                'banner_adserver_id' => $banner_adserver_id,
-            ]);
-
-            $campaignMapping->refresh();
-
-            $endpoint = env('AD_SERVER_BASE_URL').'/zon/'.$campaignMapping->publisher_zone_adserver_id.'/cam/'.$campaignMapping->campaign_adserver_id;
-            $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint);
-            $isActive = $response->body() === '{"OK"}';
-            $campaignMapping->update([
-                'is_active' => $isActive,
-            ]);
-            $campaignMapping->refresh();
-            if(!$campaignMapping->is_active){
-                throw new HttpException("Campaign was unable to publish. Try again later.");
-            }
-        }
-    }
+    event(new CampaignPublished($campaign));
     return response()->json([
         'success' => true,
         'message' => 'uploaded successfully',
