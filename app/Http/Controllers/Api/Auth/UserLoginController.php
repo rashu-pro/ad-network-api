@@ -84,7 +84,7 @@ class UserLoginController extends Controller
                 'username' => $request->email,
                 'password' => $request->password
             ]);
-           Log::info('Login response: ', $res->body());
+//           Log::info('Login response: ', $res->body());
            $user = json_decode($res['user']);
            $localUser = User::firstOrCreate(
                ['email' => $user->email],

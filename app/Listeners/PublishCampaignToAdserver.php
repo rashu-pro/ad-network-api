@@ -50,7 +50,7 @@ class PublishCampaignToAdserver
                 $campaignMapping->refresh();
                 // Payload data
                 $payload = [
-                    'advertiserId' => (int)$campaign->advertiser->adserver_id,
+                    'advertiserId' => $campaign->advertiser_adserver_id,
                     'campaignName' => $campaign->campaign_name.'_'.now(),
                     'startDate' => $campaign->start_date,
                     'endDate' => $campaign->end_date,
@@ -60,10 +60,12 @@ class PublishCampaignToAdserver
                     'weight' => 1
                 ];
 
+                Log::info('From publish campaign to payload', $payload);
                 // Send GET request with Basic Auth
                 $endpoint = env('AD_SERVER_BASE_URL').'/cam/new';
                 $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint, $payload);
 
+                Log::info('From publish campaign to adserver zone reponse', $response->json());
                 $campaign_adserver_id = $response->object()->campaignId;
                 $campaignMapping->update([
                     'campaign_adserver_id' => $campaign_adserver_id,
