@@ -94,16 +94,17 @@ Route::prefix('publisher')->middleware('auth:api')->group(function (){
     Route::post('/get-campaign-ad-zone-id-by-mapping/{campaignMapping}', [\App\Http\Controllers\Api\PublisherOtpController::class,'getCampaignScript'])->middleware('can:getAdserverZoneIdByMapping,campaignMapping');
 });
 //Route::post('user/register',[UserRegisteredController::class,'userCreate']);
-Route::get('company-asset/{companyKey}', function($companyKey){
-    $user = User::where('secure_api_id', $companyKey)->firstOrFail()->toArray();
-   return response()->json([
-        'success' => true,
-        'message' => 'User found',
-        'data' => $user ?? [],
-    ], 200);
-});
+
 
 Route::prefix('external')->group(function (){
+    Route::get('company-asset/{companyKey}', function($companyKey){
+        $user = User::where('secure_api_id', $companyKey)->firstOrFail();
+        return response()->json([
+            'success' => true,
+            'message' => 'Assets',
+            'data' => $user->assets->toArray() ?? [],
+        ], 200);
+    });
     Route::get('campaign/{companyKey}', function($companyKey){
         return \App\Http\Resources\CampaignResource::collection(User::where('secure_api_id', $companyKey)->first()->campaigns);
     });
@@ -153,6 +154,7 @@ Route::prefix('external')->group(function (){
             $campaignData['advertiser_adserver_id'] = $publisher_adserver_id;
             $campaignData['status'] = CampaignStatus::PUBLISH;
             $campaignData['payment_status'] = \App\Enums\PaymentStatus::PAID;
+            $campaignData['isDraft'] = false;
             //campaign create
             $campaign = Campaign::create($campaignData);
             $targetAsset = $user->assets->find($request->asset_id);
