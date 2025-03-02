@@ -7,12 +7,16 @@ use App\Enums\TokenAbility;
 use App\Events\CampaignPublished;
 use App\Http\Controllers\Api\Auth\AdminLoginController;
 use App\Models\Campaign;
+use App\Models\CampaignMapping;
 use App\Models\User;
 use App\Models\Zone;
+use App\Services\AdvertiserService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Auth\UserRegisteredController;
 use App\Http\Controllers\Api\Auth\UserLoginController;
@@ -22,6 +26,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use App\Traits\ApiResponse;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -90,18 +96,24 @@ Route::prefix('publisher')->middleware('auth:api')->group(function (){
     Route::post('/get-campaign-ad-zone-id-by-mapping/{campaignMapping}', [\App\Http\Controllers\Api\PublisherOtpController::class,'getCampaignScript'])->middleware('can:getAdserverZoneIdByMapping,campaignMapping');
 });
 //Route::post('user/register',[UserRegisteredController::class,'userCreate']);
+
 Route::post('/update-campaign/{id?}', function (Request $request, int $id = null){
     $campaign = Campaign::find($id);
+    $advertiserService = app(AdvertiserService::class);
     if(!$campaign){
         $request->validate([
             'zoneId' => 'required|integer|exists:publisher_assets,zone_id',
             'banner' => 'required|file|mimes:jpg,jpeg,png',
-            'companyKey' => 'required'
+            'companyKey' => 'required',
+            'campaign_name' => 'required',
+            'target_url' => 'required',
+            'start_date' => 'required',
+            'end_date' => 'required',
         ]);
         $user = User::where('secure_api_id',$request->companyKey)->firstOrFail();
 
         $campaignData = $request->only([
-            'campaign_name', 'target_url', 'start_date', 'end_date',
+            'campaign_name', 'target_url'
         ]);
         $campaignData['advertiser_id'] = $user->id;
         $campaignData['publisher_id'] = $user->id;
@@ -123,60 +135,51 @@ Route::post('/update-campaign/{id?}', function (Request $request, int $id = null
             $advertiser_id = $response->object()->advertiserId;
 
             //After the successful response add the advertiser_id into database
-            $user->publisher_adserver_id = $advertiser_id;
-            $publisher_adserver_id = $advertiser_id;
+            $user->publisher_advertiser_id = $advertiser_id;
+            $publisher_advertiser_id = $advertiser_id;
             $user->save();
             $user->refresh();
         }
 
         $campaignData['advertiser_adserver_id'] = $publisher_adserver_id;
         $campaignData['status'] = CampaignStatus::PUBLISH;
+        $campaignData['payment_status'] = \App\Enums\PaymentStatus::PAID;
         //campaign create
-        $campaign = $this->advertiserService->createCampaign($campaignData);
+        $campaign = Campaign::create($campaignData);
 
         //mapping create
-        $publishersData = User::whereHas('roles', function ($query) {
-            $query->where('name', RolesEnum::PUBLISHER->value);
-        })->where('id', $request->publisher_id)
-            ->has('assets')
-            ->with('assets')
-            ->get()
-            ->map(function ($publisher) use ($request,$user){
-                return $publisher->assets->map(function ($asset) use ($publisher,$request,$user) {
-                    $startDate = Carbon::parse($request->start_date);
-                    $endDate = Carbon::parse($request->end_date);
-                    $days = $startDate->diffInDays($endDate) + 1; // Include the start day
-                    // Calculate the total price
-                    $calculatedPrice = $asset->price_per_hour * 24 * $days;
-
-                    return [
-                        'advertiser_id' => $user->id,
-                        'publisher_id' => $publisher->id,
-                        'publisher_asset_id' => $asset->id,
-                        'publisher_zone_id' => $asset->zone_id,
-                        'start_date' => $request->start_date,
-                        'end_date' => $request->end_date,
-                        'status' => PublisherCampaignStatus::APPROVE,
-                        'calculated_price' => 0,
-                        'is_active' => true,
-                    ];
-                })->toArray(); // Convert collection to array
-            })
-            ->flatten(1) // Flatten nested arrays
-            ->toArray(); // Convert to a plain array
-        $this->advertiserService->selectPublishers($campaign->id,$publishersData);
+        foreach ($user->assets as $asset){
+            \App\Models\CampaignMapping::create([
+                'campaign_id' => $campaign->id,
+                'advertiser_id' => $user->id,
+                'publisher_id' => $user->id,
+                'publisher_asset_id' => $asset->id,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'calculated_price' => 0,
+                'is_active' => true,
+                'publisher_zone_id' => $asset->zone_id,
+                'publisher_zone_adserver_id' => $asset->zone_adserver_id,
+                'status' => PublisherCampaignStatus::APPROVE,
+            ]);
+        }
     }
 
     //updating banner
-    $mappings = $campaign->mappings()->where('publisher_id',$request->publisher_id)
-        ->where('publisher_zone_id',$request->zone_id)
+    $mappings = $campaign->mappings()->where('publisher_id',$user->id)
+        ->where('publisher_zone_id',$request->zoneId)
         ->get();
+//    dd($mappings);
 
     if($mappings->count() <= 0){
-        return $this->errorResponse('Provided zone or publisher is not associated with this campaign');
+        return response()->json([
+            'success' => false,
+            'message' => 'Provided zone or publisher is not associated with this campaign',
+            'data' => $data ?? [],
+        ], 400);
     }
 
-    $zone = Zone::findOrFail($request->zone_id);
+    $zone = Zone::findOrFail($request->zoneId);
     $validator = Validator::make($request->all(), [
         'banner' => 'required|file|mimes:jpg,jpeg,png|dimensions:width=' . $zone->width . ',height=' . $zone->height,
     ]);
@@ -204,13 +207,104 @@ Route::post('/update-campaign/{id?}', function (Request $request, int $id = null
     }
     Storage::delete('app/private/'.$tempPath);
 
-    event(new CampaignPublished($campaign));
-    return $this->successResponse(message: 'uploaded successfully', data: [
-        'campaign_id' => $campaign->id,
-        'url' => $mappings->filter(function ($mapping){
-            return $mapping->hasMedia('banner');
-        })->map(function ($mapping) {
-            return  $mapping->getFirstMedia('banner')->getUrl();
-        })->toArray()
-    ]);
+    $campaignMappings = CampaignMapping::where('campaign_id',$campaign->id)
+        ->get();
+    foreach($campaignMappings as $campaignMapping){
+        if($campaignMapping->is_active){
+            continue;
+        }
+        $zone = Zone::findOrFail($campaignMapping->publisher_zone_id);
+        if($campaignMapping->status == PublisherCampaignStatus::APPROVE){
+            // Payload data
+            $payload = [
+                'publisherId' => (int)$campaignMapping->publisherAsset->publisher_adserver_id,
+                'zoneName' => $zone->zone_name.'_'.now(),
+                'type' => 0,
+                'width' => $zone->width,
+                'height' => $zone->height,
+            ];
+            // Send GET request with Basic Auth
+            $endpoint = env('AD_SERVER_BASE_URL').'/zon/new';
+            $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint, $payload);
+            $zone_adserver_id = $response->object()->zoneId;
+
+            $campaignMapping->update([
+                'publisher_zone_adserver_id' => $zone_adserver_id,
+            ]);
+            $campaignMapping->refresh();
+            // Payload data
+            $payload = [
+                'advertiserId' => (int)$campaign->advertiser->adserver_id,
+                'campaignName' => $campaign->campaign_name.'_'.now(),
+                'startDate' => $campaign->start_date,
+                'endDate' => $campaign->end_date,
+                'impressions' => 10000,
+                'revenueType' => 1,
+                'revenue' => 12.50,
+                'weight' => 1
+            ];
+
+            // Send GET request with Basic Auth
+            $endpoint = env('AD_SERVER_BASE_URL').'/cam/new';
+            $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint, $payload);
+
+            $campaign_adserver_id = $response->object()->campaignId;
+            $campaignMapping->update([
+                'campaign_adserver_id' => $campaign_adserver_id,
+            ]);
+            $campaignMapping->refresh();
+
+
+            if(!$campaignMapping->hasMedia('banner')){
+                Log::error('Campaign does not have banner for zone '.$zone->name);
+                return ;
+            }
+            $banner = $campaignMapping->getFirstMedia('banner');
+
+            // Payload data
+            $payload = [
+                'campaignId' => (int)$campaignMapping->campaign_adserver_id,
+                'bannerName' => $banner->name,
+                'storageType' => "url",
+                'imageURL' => $banner->getUrl(),
+                'url' => $campaign->target_url,
+                'width' => $campaignMapping->publisherZone->width,
+                'height' => $campaignMapping->publisherZone->height
+            ];
+
+            // Send GET request with Basic Auth
+            $endpoint = env('AD_SERVER_BASE_URL').'/bnn/new';
+            $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint, $payload);
+
+            $banner_adserver_id = $response->object()->bannerId;
+            $campaignMapping->update([
+                'banner_adserver_id' => $banner_adserver_id,
+            ]);
+
+            $campaignMapping->refresh();
+
+            $endpoint = env('AD_SERVER_BASE_URL').'/zon/'.$campaignMapping->publisher_zone_adserver_id.'/cam/'.$campaignMapping->campaign_adserver_id;
+            $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint);
+            $isActive = $response->body() === '{"OK"}';
+            $campaignMapping->update([
+                'is_active' => $isActive,
+            ]);
+            $campaignMapping->refresh();
+            if(!$campaignMapping->is_active){
+                throw new HttpException("Campaign was unable to publish. Try again later.");
+            }
+        }
+    }
+    return response()->json([
+        'success' => true,
+        'message' => 'uploaded successfully',
+        'data' => [
+            'campaign_id' => $campaign->id,
+            'url' => $mappings->filter(function ($mapping){
+                return $mapping->hasMedia('banner');
+            })->map(function ($mapping) {
+                return  $mapping->getFirstMedia('banner')->getUrl();
+            })->toArray()
+        ],
+    ], 200);
 });
