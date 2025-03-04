@@ -103,7 +103,16 @@ Route::prefix('external')->group(function (){
         return response()->json([
             'success' => true,
             'message' => 'Assets',
-            'data' => $user->assets->toArray() ?? [],
+            'data' => $user->assets->map(function($asset){
+                    return [
+                        'id' => $asset->id,
+                        'name' => $asset->asset->name,
+                        'slug' => $asset->asset->slug,
+                        'zone_width' => $asset->zone->width,
+                        'zone_height' => $asset->zone->height,
+                        'zone_slug' => $asset->zone->slug,
+                    ];
+                }) ?? [],
         ], 200);
     });
     Route::get('campaign/{companyKey}', function($companyKey){
