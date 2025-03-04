@@ -110,7 +110,7 @@ Route::prefix('external')->group(function (){
                         'slug' => $asset->asset->slug,
                         'zone_width' => $asset->zone->width,
                         'zone_height' => $asset->zone->height,
-                        'zone_slug' => $asset->zone->slug,
+                        'zone_slug' => $asset->zone->zone_name,
                     ];
                 }) ?? [],
         ], 200);
