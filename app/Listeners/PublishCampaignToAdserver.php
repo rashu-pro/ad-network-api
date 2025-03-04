@@ -50,7 +50,7 @@ class PublishCampaignToAdserver
                 $campaignMapping->refresh();
                 // Payload data
                 $payload = [
-                    'advertiserId' => $campaign->advertiser_adserver_id,
+                    'advertiserId' => (int)$campaign->advertiser_adserver_id,
                     'campaignName' => $campaign->campaign_name.'_'.now(),
                     'startDate' => $campaign->start_date,
                     'endDate' => $campaign->end_date,
