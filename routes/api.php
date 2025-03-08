@@ -116,7 +116,7 @@ Route::prefix('external')->group(function (){
         ], 200);
     });
     Route::get('campaign/{companyKey}', function($companyKey){
-        return \App\Http\Resources\CampaignResource::collection(User::where('secure_api_id', $companyKey)->first()->campaigns);
+        return \App\Http\Resources\CampaignResource::collection(User::where('secure_api_id', $companyKey)->first()->publisherCampaigns);
     });
     Route::post('/campaign/{slug}', [\App\Http\Controllers\Api\External\PublisherCampaignController::class,'storeCampaign']);
     Route::delete('/campaign/{companyKey}/{id}/', function ($companyKey, $id) {
