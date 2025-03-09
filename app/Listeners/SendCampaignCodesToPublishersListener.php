@@ -20,6 +20,7 @@ class SendCampaignCodesToPublishersListener
     {
         // Get unique publisher_asset_ids from the event's mappings
         $publisherAssetIds = $event->campaignMappings->pluck('publisher_asset_id')->unique();
+        Log::info("publisher ids: {$publisherAssetIds}");
 
         foreach ($publisherAssetIds as $publisherAssetId) {
             // Retrieve all mappings for this publisher_asset_id from the database
@@ -49,10 +50,12 @@ class SendCampaignCodesToPublishersListener
                     'publisher_asset_id' => $publisherAssetId,
                     'zone_scripts' => $codes,
                 ];
+                Log::info("Webhook payload: ", $payload);
 
                 // Send data to the publisher's webhook URL
                 $response = Http::post("{$mappings->first()->publisherAsset->webhook_path}", $payload);
 
+                Log::info("Webhook Path: {$mappings->first()->publisherAsset->webhook_path}");
                 Log::info("Webhook Response for {$publisherAssetId} {$response->status()}: {$response->body()}");
 
                 if (!$response->ok()) {

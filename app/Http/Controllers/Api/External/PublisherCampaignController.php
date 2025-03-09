@@ -30,6 +30,8 @@ class PublisherCampaignController extends Controller
             ]
         );
 
+        $user->refresh();
+//        dd($user);
 
         // Ensure asset is registered for this user
         $targetAsset = $this->ensurePublisherAssetExists($user, $asset, $zone);
@@ -82,7 +84,7 @@ class PublisherCampaignController extends Controller
         }
 
         // If asset does not exist for this user, register and create it
-        $url = 'https://ads.secure-api.net/digital-display/?org_slug=' . $user->secure_api_key;
+        $url = 'https://ads.secure-api.net/digital-display/?org_slug=' . $user->secure_api_id;
         $domain = 'https://ads.secure-api.net';
         $webhookPath = "{$domain}/wp-json/adserver/v1/{$user->secure_api_id}/zone-scripts/{$asset->slug}";
 
