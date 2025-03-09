@@ -31,12 +31,12 @@ class CampaignResource extends JsonResource
                 // Retrieve the first mapping in the group to extract publisher details
                 $firstMapping = $groupedMappings->first();
                 $publisher = $firstMapping->publisher;
-                $securePublisher = SecureApi::getUser($publisher->secure_api_id);
+//                $securePublisher = SecureApi::getUser($publisher->secure_api_id);
                 return [
                     'publisher_id' => $publisher->id,
-                    'publisher_name' => $securePublisher['businessName'],
-                    'publisher_address' => $securePublisher['businessInfo']['address'],
-                    'logo' => $securePublisher['businessInfo']['logoUrl'],
+//                    'publisher_name' => $securePublisher['businessName'],
+//                    'publisher_address' => $securePublisher['businessInfo']['address'],
+//                    'logo' => $securePublisher['businessInfo']['logoUrl'],
                     'assets' => $groupedMappings->map(function ($mapping) {
                         $asset = $mapping->publisherAsset; // Get asset details from mapping
                         return [
