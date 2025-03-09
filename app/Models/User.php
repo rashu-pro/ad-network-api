@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -60,9 +61,16 @@ class User extends Authenticatable
         return $this->hasMany(PublisherAsset::class, 'publisher_id','id');
     }
 
-    public function publisherCampaigns()
+    public function publisherCampaigns(): HasManyThrough
     {
-        return $this->hasMany(Campaign::class, 'publisher_id','id');
+        return $this->hasManyThrough(
+            Campaign::class,
+            CampaignMapping::class,
+            'publisher_id',
+            'id',
+            'id',
+            'campaign_id'
+        );
     }
     public function campaigns()
     {
