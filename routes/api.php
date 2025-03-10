@@ -116,16 +116,41 @@ Route::prefix('external')->group(function (){
         ], 200);
     });
     Route::get('campaign/{companyKey}', function($companyKey){
-        return \App\Http\Resources\CampaignResource::collection(User::where('secure_api_id', $companyKey)->first()->publisherCampaigns ?? []);
+        $user = User::where('secure_api_id', $companyKey)->firstOrFail();
+        $campaigns = CampaignMapping::where('advertiser_id', $user->id)
+                                    ->where('publisher_id',$user->id)
+                                    ->get()
+                                    ->map(function($campaign){
+                                        return [
+                                            'id' => $campaign->campaign->id,
+                                            'name' => $campaign->campaign->campaign_name,
+                                            'start_date' => $campaign->start_date,
+                                            'end_date' => $campaign->end_date,
+                                            'target_url' => $campaign->campaign->target_url,
+                                            'banner' => $campaign->hasMedia('banner') ? $campaign->getFirstMediaUrl('banner') : '#',
+                                        ];
+                                    });
+        return response()->json([
+            'success' => true,
+            'message' => 'Campaigns',
+            'data' => $campaigns,
+        ]);
     });
     Route::post('/campaign/{slug}', [\App\Http\Controllers\Api\External\PublisherCampaignController::class,'storeCampaign']);
     Route::delete('/campaign/{companyKey}/{id}/', function ($companyKey, $id) {
         try{
             $campaign = User::where('secure_api_id', $companyKey)->firstOrFail()->campaigns()->where('id', $id)->firstOrFail();
+//            dd($campaign->mappings);
             foreach ($campaign->mappings as $mapping){
+//                dd($mapping);
                 $mapping->clearMediaCollection('banner');
-                $endpoint = env('AD_SERVER_BASE_URL').'/zon/'.$mapping->pubisher_zone_adserver_id;
-                Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->delete($endpoint);
+                $endpoint = env('AD_SERVER_BASE_URL').'/zon/'.$mapping->publisher_zone_adserver_id;
+//                dd($endpoint);
+                $res = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->delete($endpoint);
+                if(!$res->ok()){
+                    Log::error('Request failed with status: ' . $res->status().$res->body());
+                    throw new \Exception('Unable to process delete zone from ad-server request');
+                }
                 $mapping->delete();
             }
             $publisherAssetIds = $campaign->mappings->pluck('publisher_asset_id')->unique();
@@ -186,7 +211,7 @@ Route::prefix('external')->group(function (){
                 'success' => true,
                 'message' => 'Campaign deleted',
             ]);
-        }catch (\Illuminate\Database\Eloquent\ModelNotFoundException $exception){
+        }catch (\Exception $exception){
             return response()->json([
                 'success' => false,
                 'message' => $exception->getMessage()
