@@ -19,9 +19,16 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:3000')],
+    'allowed_origins' => [
+        env('FRONTEND_URL', 'http://localhost:3000'),
+        'http://secure-api.dev',
+        'http://secure-api.net',
+    ],
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '/^https?:\/\/([a-z0-9-]+\.)*secure-api\.dev$/i',
+        '/^https?:\/\/([a-z0-9-]+\.)*secure-api\.net$/i',
+    ],
 
     'allowed_headers' => ['*'],
 
