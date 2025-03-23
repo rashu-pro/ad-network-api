@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Enums\RolesEnum;
 use App\Enums\TokenAbility;
+use App\Events\AdvertiserRegistered;
 use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\AdvertiserLoginRequest;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
 use OpenApi\Attributes as OA;
+use Spatie\Permission\Models\Role;
+
 class UserLoginController extends Controller
 {
     use ApiResponse;
@@ -84,14 +87,31 @@ class UserLoginController extends Controller
                 'username' => $request->email,
                 'password' => $request->password
             ]);
-//           Log::info('Login response: ', $res->body());
-           $user = json_decode($res['user']);
-           $localUser = User::firstOrCreate(
-               ['email' => $user->email],
-               [
-                   'secure_api_id' => $user->userKey
-               ]
-           );
+
+            Log::info('response from secure api ', $res);
+
+            $user = json_decode($res['user']);
+            $localUser = User::where('email', $user->email)
+                ->where('secure_api_id', $user->companyKey)
+                ->first();
+
+            if (!$localUser) {
+                $localUser = User::create([
+                    'email' => $user->email,
+                    'secure_api_id' => $user->companyKey
+                ]);
+
+                if($user->isAdPublisher == true){
+                    $publisherRole = app(Role::class)->findOrCreate(RolesEnum::PUBLISHER->value,'api');
+                    $localUser->assignRole($publisherRole);
+                }
+
+                if($user->isAdvertiser == true){
+                    $advertiserRole = app(Role::class)->findOrCreate(RolesEnum::ADVERTISER->value,'api');
+                    $localUser->assignRole($advertiserRole);
+                    event(new AdvertiserRegistered($user));
+                }
+            }
             return $this->createTokens($localUser);
         } catch (ValidationException $e) {
             return $this->errorResponse($e->getMessage(), $e->errors(), 422);

@@ -8,6 +8,7 @@ use App\HttpModels\SecureApiUser;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class SecureApiService
 {
@@ -60,16 +61,16 @@ class SecureApiService
     /**
      * @throws SecureApiException
      */
-    public function getUser(string $id): array
+    public function getUser(string $id, string $email): array
     {
-        return Cache::remember("user_{$id}", now()->addDay(), function () use ($id) {
-            $user = User::where('secure_api_id', $id)->firstOrFail();
+        return Cache::remember("user_{$id}", now()->addDay(), function () use ($id,$email) {
+            $user = User::where('secure_api_id', $id)->where('email',$email)->firstOrFail();
 
             // Determine URL based on user role
-            $url = $user->hasRole(RolesEnum::PUBLISHER)
+            $url = $user->hasRole(RolesEnum::PUBLISHER->value)
                 ? "{$this->base_url}/ad-network/ad-publisher/{$id}"
                 : "{$this->base_url}/ad-network/advertiser/{$id}";
-
+            Log::info('url '.$url);
             // Fetch user data from external API
             $response = Http::get($url);
 

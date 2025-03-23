@@ -31,12 +31,12 @@ class CampaignResource extends JsonResource
                 // Retrieve the first mapping in the group to extract publisher details
                 $firstMapping = $groupedMappings->first();
                 $publisher = $firstMapping->publisher;
-//                $securePublisher = SecureApi::getUser($publisher->secure_api_id);
+                $securePublisher = SecureApi::getUser($publisher->secure_api_id, $publisher->email);
                 return [
                     'publisher_id' => $publisher->id,
-//                    'publisher_name' => $securePublisher['businessName'],
-//                    'publisher_address' => $securePublisher['businessInfo']['address'],
-//                    'logo' => $securePublisher['businessInfo']['logoUrl'],
+                    'publisher_name' => $securePublisher['businessName'],
+                    'publisher_address' => $securePublisher['businessInfo']['address'],
+                    'logo' => $securePublisher['businessInfo']['logoUrl'],
                     'assets' => $groupedMappings->map(function ($mapping) {
                         $asset = $mapping->publisherAsset; // Get asset details from mapping
                         return [
@@ -56,7 +56,9 @@ class CampaignResource extends JsonResource
                             'target_url' => $mapping->campaign->target_url,
                             'is_active' => $mapping->is_active,
                             'note' => $mapping->notes,
-                            'banner' => $mapping->hasMedia('banner') ? $mapping->getFirstMedia('banner')->getUrl() : '#'
+                            'banner' => $mapping->hasMedia('banner') ? $mapping->getFirstMedia('banner')->getUrl() : '#',
+                            'status' => $mapping->status,
+                            'notes' => $mapping->notes,
                         ];
                     })->toArray(),
                 ];
