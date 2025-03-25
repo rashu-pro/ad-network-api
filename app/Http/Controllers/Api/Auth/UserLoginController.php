@@ -109,7 +109,7 @@ class UserLoginController extends Controller
                 if($user->isAdvertiser == true){
                     $advertiserRole = app(Role::class)->findOrCreate(RolesEnum::ADVERTISER->value,'api');
                     $localUser->assignRole($advertiserRole);
-                    event(new AdvertiserRegistered($user));
+                    event(new AdvertiserRegistered($localUser));
                 }
             }
             return $this->createTokens($localUser);
