@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\PublisherCampaignStatus;
 use App\Enums\RolesEnum;
+use App\Events\PublishCampaignMappingToAdServer;
 use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CampaignResource;
+use App\Listeners\PublishCampaignToAdserver;
 use App\Models\Campaign;
 use App\Models\CampaignMapping;
 use App\Models\User;
@@ -662,7 +665,7 @@ class AdvertiserOptController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($publisher) {
-                $securePublisher = SecureApi::getUser($publisher->secure_api_id);
+                $securePublisher = SecureApi::getUser($publisher->secure_api_id, $publisher->email);
                 return [
                     'id' => $publisher->id,
                     'company_name' => $securePublisher['businessName'],
@@ -714,8 +717,11 @@ class AdvertiserOptController extends Controller
         if($campaignMapping->is_active){
             return $this->errorResponse(message: 'Campaign already published', status: 409);
         }
-
-
+        if($campaignMapping->status != PublisherCampaignStatus::APPROVE){
+            $campaignMapping->update(['status' => PublisherCampaignStatus::APPROVE->value]);
+        }
+        event(new PublishCampaignMappingToAdServer($campaignMapping));
+        return $this->successResponse(message: 'Campaign published');
     }
 
 }

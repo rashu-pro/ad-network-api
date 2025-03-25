@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\AdvertiserRegistered;
+use App\Facades\SecureApi;
 use App\Models\Advertiser;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
@@ -23,11 +24,11 @@ class AddAdvertiserToAdServer
     public function handle(AdvertiserRegistered $event): void
     {
         $advertiserRegistered = $event->advertiser;
-
+        $secureAdvertiser = SecureApi::getUser($advertiserRegistered->secure_api_id,$advertiserRegistered->email);
         // Payload data
         $payload = [
-            'advertiserName' => $advertiserRegistered->name ?? 'test_advertiser_'.$advertiserRegistered->id,
-            'contactName'    => $advertiserRegistered->name ?? 'test_advertiser_'.$advertiserRegistered->id,
+            'advertiserName' => $secureAdvertiser['name'] ?? 'test_advertiser_'.$advertiserRegistered->id,
+            'contactName'    => $secureAdvertiser['name'] ?? 'test_advertiser_'.$advertiserRegistered->id,
             'emailAddress'   => $advertiserRegistered->email,
             'username'       => $advertiserRegistered->email,
         ];
