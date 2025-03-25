@@ -6,6 +6,8 @@ use App\Enums\CampaignStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PublisherCampaignStatus;
 use App\Enums\RolesEnum;
+use App\Events\PublishCampaignMappingToAdServer;
+use App\Events\SendCampaignCodesToPublishers;
 use App\Exceptions\SecureApiException;
 use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
@@ -30,6 +32,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -392,7 +395,7 @@ class PublisherOtpController extends Controller
         $user = Auth::guard('api')->user();
         $asset = Asset::findOrFail($request->asset_id);
         $data = $request->only(['asset_id','min_duration_in_hour','price_per_hour', 'url', 'zone_id']);
-        $secureApiUser = SecureApi::getUser($user->secure_api_id);
+        $secureApiUser = SecureApi::getUser($user->secure_api_id,$user->email);
 //        $data['url'] = $request->url ? "{$request->url}?org_slug={$secureApiUser['companyKey']}": '';
         $data['webhook_path'] = $request->url ? "{$request->url}/wp-json/adserver/v1/zone-scripts/web": '';
         if($asset->slug != 'website' && $asset->type == 'online'){
@@ -405,15 +408,15 @@ class PublisherOtpController extends Controller
         if($asset->type == 'online' && (!$request->has('url') || $request->get('url') == null)){
             return $this->errorResponse(message: 'Url is required for online asset',status: 422);
         }
-        if(!$validator){
-            return $this->errorResponse(message: 'Asset validation not found',status: 404);
+        if($validator){
+            if($validator->max_price_per_hour < $request->price_per_hour){
+                return $this->errorResponse('Price is not acceptable for the mentioned population');
+            }
+            if($validator->min_duration_in_hour > $request->min_duration_in_hour){
+                return $this->errorResponse('Duration is not acceptable for the mentioned population');
+            }
         }
-        if($validator->max_price_per_hour < $request->price_per_hour){
-            return $this->errorResponse('Price is not acceptable for the mentioned population');
-        }
-        if($validator->min_duration_in_hour > $request->min_duration_in_hour){
-            return $this->errorResponse('Duration is not acceptable for the mentioned population');
-        }
+
 
 //        $securePublisher = SecureApi::getUser($user->secure_api_id);
 
@@ -765,10 +768,32 @@ class PublisherOtpController extends Controller
             'status' => 'required',
             'notes' => 'nullable'
         ]);
-        if($request->status != PublisherCampaignStatus::APPROVE->value){
-            //todo:: unlink zone from campaign
-            //todo:: change campaign_mapping status
+        if($campaignMapping->campaign->status == CampaignStatus::PUBLISH){
+
+            $campaignMapping->status  = $request->status;
+            $campaignMapping->notes  = $request->notes;
+            $campaignMapping->save();
+            $campaignMapping->refresh();
+
+            if($request->status != PublisherCampaignStatus::APPROVE->value){
+                $endpoint = env('AD_SERVER_BASE_URL').'/zon/'.$campaignMapping->publisher_zone_adserver_id;
+                $res = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->delete($endpoint);
+                if(!$res->ok()){
+                    Log::error('Request failed with status: ' . $res->status().$res->body());
+                    throw new \Exception('Unable to process delete zone from ad-server request');
+                }
+                $campaignMapping->is_active = false;
+                $campaignMapping->save();
+                $campaignMapping->refresh();
+                event(new SendCampaignCodesToPublishers($campaignMapping->campaign->mappings));
+            }else{
+                if($campaignMapping->is_active == false){
+                    event(new PublishCampaignMappingToAdServer($campaignMapping));
+                }
+            }
+            return $this->successResponse('Campaign status is updated for '.$campaignMapping->publisherAsset->asset->name);
         }
+        return $this->errorResponse('Campaign is not valid');
     }
 
     public function getCampaignScript(CampaignMapping $campaignMapping)
