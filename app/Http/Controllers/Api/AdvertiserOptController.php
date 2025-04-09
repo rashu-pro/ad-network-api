@@ -681,6 +681,7 @@ class AdvertiserOptController extends Controller
                                 'name' => $publisherAsset->asset->name ?? null,
                                 'slug' => $publisherAsset->asset->slug ?? null,
                                 'type' => $publisherAsset->asset->type ?? null,
+                                'url' => $publisherAsset->url ?? null,
                             ];
                         }),
                     ];
@@ -688,7 +689,8 @@ class AdvertiserOptController extends Controller
                     return null;
                 }
             })
-            ->filter();
+            ->filter()
+            ->values();
 
         return $this->successResponse('All available publishers',$data);
     }
