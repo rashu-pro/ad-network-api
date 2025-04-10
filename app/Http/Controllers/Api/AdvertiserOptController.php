@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\PublisherCampaignStatus;
 use App\Enums\RolesEnum;
 use App\Events\PublishCampaignMappingToAdServer;
+use App\Exceptions\SecureApiException;
 use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CampaignResource;
@@ -665,23 +666,31 @@ class AdvertiserOptController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($publisher) {
-                $securePublisher = SecureApi::getUser($publisher->secure_api_id, $publisher->email);
-                return [
-                    'id' => $publisher->id,
-                    'company_name' => $securePublisher['businessName'],
-                    'publisher_address' => $securePublisher['businessInfo']['address'],
-                    'logo' => $securePublisher['businessInfo']['logoUrl'],
-                    'email' => $publisher->email,
-                    'assets' => $publisher->assets->map(function ($publisherAsset) {
-                        return [
-                            'id' => $publisherAsset->asset->id ?? null,
-                            'name' => $publisherAsset->asset->name ?? null,
-                            'slug' => $publisherAsset->asset->slug ?? null,
-                            'type' => $publisherAsset->asset->type ?? null,
-                        ];
-                    }),
-                ];
-            });
+                try{
+                    $securePublisher = SecureApi::getUser($publisher->secure_api_id, $publisher->email);
+
+                    return [
+                        'id' => $publisher->id,
+                        'company_name' => $securePublisher['businessName'],
+                        'publisher_address' => $securePublisher['businessInfo']['address'],
+                        'logo' => $securePublisher['businessInfo']['logoUrl'],
+                        'email' => $publisher->email,
+                        'assets' => $publisher->assets->map(function ($publisherAsset) {
+                            return [
+                                'id' => $publisherAsset->asset->id ?? null,
+                                'name' => $publisherAsset->asset->name ?? null,
+                                'slug' => $publisherAsset->asset->slug ?? null,
+                                'type' => $publisherAsset->asset->type ?? null,
+                                'url' => $publisherAsset->url ?? null,
+                            ];
+                        }),
+                    ];
+                }catch (SecureApiException $apiException){
+                    return null;
+                }
+            })
+            ->filter()
+            ->values();
 
         return $this->successResponse('All available publishers',$data);
     }

@@ -386,7 +386,7 @@ class PublisherOtpController extends Controller
         $request->validate([
             'asset_id' => 'required|integer|exists:assets,id',
             'zone_id' => 'required|integer|exists:zones,id',
-            'min_population' => 'required|integer',
+            'min_population' => 'nullable|integer',
             'max_population' => 'nullable|integer',
             'min_duration_in_hour' => 'required|numeric',
             'price_per_hour' => 'required|numeric',
