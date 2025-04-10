@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use function Laravel\Prompts\error;
 use function Symfony\Component\String\s;
 use OpenApi\Attributes as OA;
 class PublisherOtpController extends Controller
@@ -783,9 +784,13 @@ class PublisherOtpController extends Controller
                     throw new \Exception('Unable to process delete zone from ad-server request');
                 }
                 $campaignMapping->is_active = false;
+                $campaignMapping->code = null;
                 $campaignMapping->save();
                 $campaignMapping->refresh();
-                event(new SendCampaignCodesToPublishers($campaignMapping->campaign->mappings));
+//                Log::info('mapping: ', $campaignMapping);
+                $mappings = $campaignMapping->campaign->mappings;
+                Log::info('valid mapping: ', $mappings->toArray());
+                event(new SendCampaignCodesToPublishers($mappings));
             }else{
                 if($campaignMapping->is_active == false){
                     event(new PublishCampaignMappingToAdServer($campaignMapping));

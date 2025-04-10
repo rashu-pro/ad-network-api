@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use App\Events\CampaignPublished;
+use App\Events\PublishCampaignMappingToAdServer;
+use App\Listeners\CampaignMappingGenerateCode;
+use App\Listeners\CampaignMappingPublishListener;
 use App\Listeners\GenerateCampaignCodes;
 use App\Listeners\PublishCampaignToAdserver;
 use App\Models\Campaign;
@@ -55,6 +58,14 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(
             CampaignPublished::class,
             GenerateCampaignCodes::class
+        );
+        Event::listen(
+            PublishCampaignMappingToAdServer::class,
+            CampaignMappingPublishListener::class
+        );
+        Event::listen(
+            PublishCampaignMappingToAdServer::class,
+            CampaignMappingGenerateCode::class
         );
     }
 }
