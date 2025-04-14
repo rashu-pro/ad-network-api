@@ -398,7 +398,8 @@ class PublisherOtpController extends Controller
         $data = $request->only(['asset_id','min_duration_in_hour','price_per_hour', 'url', 'zone_id']);
         $secureApiUser = SecureApi::getUser($user->secure_api_id,$user->email);
 //        $data['url'] = $request->url ? "{$request->url}?org_slug={$secureApiUser['companyKey']}": '';
-        $data['webhook_path'] = $request->url ? "{$request->url}/wp-json/adserver/v1/zone-scripts/web": '';
+        $url = rtrim($request->url, '/');
+        $data['webhook_path'] = $url ? "{$url}/wp-json/adserver/v1/zone-scripts/web": '';
         if($asset->slug != 'website' && $asset->type == 'online'){
             $domain = $this->getDomainOnly($request->url);
             $data['webhook_path'] = $domain ? "{$domain}/wp-json/adserver/v1/{$secureApiUser['secure_api_id']}/zone-scripts/{$asset->slug}": '';
