@@ -28,7 +28,7 @@ class AssetDataSeeder extends Seeder
             [
                 'name' => 'Digital Display',
                 'slug' => 'digital-display',
-                'type' => 'offline',
+                'type' => 'online',
                 'is_active' => true,
             ],
         ];
@@ -63,8 +63,8 @@ class AssetDataSeeder extends Seeder
                 case 'website':
                     $zoneData = [
                         'zone_name' => 'header',
-                        'width' => 1920,
-                        'height' => 600,
+                        'width' => 1200,
+                        'height' => 200,
                         'type_id' => 1,
                     ];
                     break;
@@ -72,8 +72,8 @@ class AssetDataSeeder extends Seeder
                 case 'mobile':
                     $zoneData = [
                         'zone_name' => 'full_screen',
-                        'width' => 1080,
-                        'height' => 1920,
+                        'width' => 778,
+                        'height' => 436,
                         'type_id' => 2,
                     ];
                     break;
