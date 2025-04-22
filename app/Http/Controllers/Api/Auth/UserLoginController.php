@@ -208,12 +208,18 @@ class UserLoginController extends Controller
 
         $accessToken = $user->createToken('access_token', [TokenAbility::ACCESS_API->value], $accessTokenExpiresAt)->plainTextToken;
         $refreshToken = $user->createToken('refresh_token', [TokenAbility::ISSUE_ACCESS_TOKEN->value], $refreshTokenExpiresAt)->plainTextToken;
-//        $secureApiUser = SecureApi::getUser($user->secure_api_id);
+        $secureApiUser = SecureApi::getUser($user->secure_api_id, $user->email);
+
         return $this->successResponse('Logged in successfully.', [
             'id' => $user->id,
             'companyKey' => $user->secure_api_id,
+            'companyName' => $secureApiUser['businessName'] ?? null,
+            'logo' => $secureApiUser['businessInfo']['logoUrl'] ?? null,
+            'website' => $secureApiUser['businessInfo']['websiteUrl'] ?? null,
+            'address' => $secureApiUser['businessInfo']['address'] ?? null,
             'email' => $user->email,
-            'name' => $user->name,
+            'phone' =>  $secureApiUser['contactInfo']['phone'] ?? null,
+            'name' => $secureApiUser['contactInfo']['name'] ?? null,
             'access_token' => $accessToken,
             'access_token_expires_at' => $accessTokenExpiresAt,
             'refresh_token' => $refreshToken,

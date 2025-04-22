@@ -8,6 +8,7 @@ use App\HttpModels\Publisher;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Log;
 
 class CampaignResource extends JsonResource
 {
@@ -26,6 +27,7 @@ class CampaignResource extends JsonResource
                 'advertiser_adserver_id' => $this->advertiser_adserver_id,
                 'status' => $this->status,
                 'is_draft' => $this->is_draft,
+                'advertiser' => $this->advertiserDetails($this->advertiser) ?? null
             ],
             'publishers' => $this->campaignMappings()->get()->groupBy('publisher_id')->map(function ($groupedMappings) {
                 // Retrieve the first mapping in the group to extract publisher details
@@ -63,6 +65,13 @@ class CampaignResource extends JsonResource
                     })->toArray(),
                 ];
             })->values()->toArray(),
+        ];
+    }
+
+    private function advertiserDetails(User $advertiser){
+        $secureAdvertiser = SecureApi::getUser($advertiser->secure_api_id, $advertiser->email);
+        return [
+            'name' => $secureAdvertiser['businessName'],
         ];
     }
 }
