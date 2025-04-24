@@ -231,6 +231,7 @@ Route::prefix('test')->middleware('auth:api')->group(function (){
        $password = 'Ci7L[A_ZQ04l';
 
        $response = Http::withBasicAuth($username, $password)->get($api_url);
+       Log::info("Response for test api {$response->status()}: {$response->body()}");
        return response()->json([
            'success' => $response->status(),
            'data' => [
