@@ -222,3 +222,21 @@ Route::prefix('external')->group(function (){
     });
 });
 
+// Test route
+Route::prefix('test')->middleware('auth:api')->group(function (){
+   Route::get('/test-endpoint', function (){
+       $api_url = 'https://ads.secure-api.net/wp-json/test-restapi/v1/test-endpoint';
+
+       $username = 'demo-mosque-admin-digital-display';
+       $password = 'Ci7L[A_ZQ04l';
+
+       $response = Http::withBasicAuth($username, $password)->get($api_url);
+       return response()->json([
+           'success' => $response->status(),
+           'data' => [
+               'data1', $response->body()
+           ]
+       ], 200);
+   });
+});
+
