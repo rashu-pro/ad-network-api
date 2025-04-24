@@ -85,8 +85,12 @@ class SendCampaignCodesToPublishersListener
                 ];
 
                 // Send data to the publisher's webhook URL
+                $response = Http::withHeaders([
+                    'User-Agent' => 'MyCustomUserAgent/1.0',
+                    'Accept' => 'application/json',
+                    'Referer' => url()->current(),
+                ])->post("{$mappings->first()->publisherAsset->webhook_path}", $payload);
 
-                $response = Http::post("{$mappings->first()->publisherAsset->webhook_path}", $payload);
 
                 Log::info("Webhook Response for {$publisherAssetId} {$response->status()}: {$response->body()}");
 
