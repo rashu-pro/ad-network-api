@@ -234,7 +234,7 @@ Route::prefix('test')->middleware('auth:api')->group(function (){
        $response = Http::withHeaders([
            'User-Agent' => 'MyCustomUserAgent/1.0',
            'Accept' => 'application/json',
-           'Referer' => 'https://api-adnetwork.secure-api.net',
+           'Referer' => url()->current(),
        ])->get($api_url);
        Log::info("Response for test api {$response->status()}: {$response->body()}");
        return response()->json([
