@@ -244,5 +244,12 @@ Route::prefix('test')->middleware('auth:api')->group(function (){
            ]
        ], 200);
    });
+
+   Route::get('/test-endpoint-to-check-deployment-working', function (){
+       return response()->json([
+           'success' => true,
+           'message' => 'deployment working successfully'
+       ]);
+   });
 });
 
