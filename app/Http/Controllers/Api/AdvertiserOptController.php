@@ -295,14 +295,14 @@ class AdvertiserOptController extends Controller
         ]);
         $campaignData['advertiser_id'] = $user->id;
         $campaignData['advertiser_adserver_id'] = $user->adserver_id;
-        $campaign = $this->advertiserService->createCampaign($campaignData);
         $startDate = Carbon::parse($request->start_date);
         $endDate = Carbon::parse($request->end_date);
         $days = $startDate->diffInDays($endDate) + 1;
-        $minDuration = DB::table('publisher_assets')->whereIn('publisher_id',$request->publisher_ids)->min('min_duration_in_hour');
-        if(($days * 24) < $minDuration){
-            return $this->errorResponse('You have to run ad for at least '.$minDuration.' Hours');
+        $minDuration = DB::table('publisher_assets')->whereIn('publisher_id',$request->publisher_ids)->min('min_duration_in_hour') / 24;
+        if(($days) < $minDuration){
+            return $this->errorResponse('You have to run ad for at least '.$minDuration.' Days');
         }
+        $campaign = $this->advertiserService->createCampaign($campaignData);
         $publishersData = User::whereHas('roles', function ($query) {
                 $query->where('name', RolesEnum::PUBLISHER->value);
             })->whereIn('id', $request->publisher_ids)
