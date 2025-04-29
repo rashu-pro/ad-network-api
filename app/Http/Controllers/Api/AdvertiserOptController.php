@@ -6,6 +6,7 @@ use App\Enums\PublisherCampaignStatus;
 use App\Enums\RolesEnum;
 use App\Events\PublishCampaignMappingToAdServer;
 use App\Exceptions\SecureApiException;
+use App\Facades\AdServer;
 use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CampaignResource;
@@ -717,6 +718,8 @@ class AdvertiserOptController extends Controller
             ])
             ->preservingOriginal()
             ->toMediaCollection('banner');
+
+
         return $this->successResponse(message: 'uploaded successfully', data: [
             'url' => $campaignMapping->getFirstMedia('banner')->getUrl()
         ]);
@@ -732,5 +735,85 @@ class AdvertiserOptController extends Controller
         event(new PublishCampaignMappingToAdServer($campaignMapping));
         return $this->successResponse(message: 'Campaign published');
     }
+
+    #[OA\Delete(
+        path: "/api/advertiser/delete-campaign/{id}",
+        summary: "Delete a campaign",
+        security: [
+            ["bearerAuth" => []] // Protected route requiring Bearer token
+        ],
+        tags: ["Advertiser"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                description: "ID of the campaign to delete",
+                in: "path",
+                required: true,
+                schema: new OA\Schema(type: "integer", example: 1)
+            )
+        ],
+        responses: [
+            new OA\Response(response: 200, description: "Campaign deleted successfully",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: true),
+                            new OA\Property(property: "message", type: "string", example: "Campaign deleted successfully"),
+                        ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 404, description: "Campaign not found",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "Campaign not found"),
+                        ],
+                        type: "object"
+                    )
+                )
+            ),
+            new OA\Response(response: 500, description: "Internal Server Error",
+                content: new OA\MediaType(
+                    mediaType: "application/json",
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: "success", type: "boolean", example: false),
+                            new OA\Property(property: "message", type: "string", example: "An unexpected error occurred"),
+                        ],
+                        type: "object"
+                    )
+                )
+            )
+        ]
+    )]
+    public function deleteCampaign(Campaign $campaign)
+    {
+        try {
+            $user = Auth::guard('api')->user();
+
+            if ($campaign->advertiser_id !== $user->id) {
+                return $this->errorResponse('Unauthorized to delete this campaign', 403);
+            }
+
+            if (!empty($campaign->campaign_adserver_id)) {
+                AdServer::deleteCampaign($campaign->campaign_adserver_id);
+            }
+
+            // Delete the campaign and its related mappings, banners if any
+            $campaign->mappings()->delete();
+            $campaign->delete();
+
+            return $this->successResponse('Campaign deleted successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+
 
 }

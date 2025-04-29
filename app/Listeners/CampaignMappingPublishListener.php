@@ -4,113 +4,110 @@ namespace App\Listeners;
 
 use App\Enums\PublisherCampaignStatus;
 use App\Events\PublishCampaignMappingToAdServer;
+use App\Facades\AdServer;
 use App\Models\Zone;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class CampaignMappingPublishListener
 {
-    /**
-     * Create the event listener.
-     */
     public function __construct()
     {
         //
     }
 
-    /**
-     * Handle the event.
-     */
     public function handle(PublishCampaignMappingToAdServer $event): void
     {
         $campaignMapping = $event->mapping;
-        if($campaignMapping->is_active){
+
+        if ($campaignMapping->is_active) {
             return;
         }
+
         $zone = Zone::findOrFail($campaignMapping->publisher_zone_id);
-        if($campaignMapping->status == PublisherCampaignStatus::APPROVE) {
-            // Payload data
-            $payload = [
-                'publisherId' => (int)$campaignMapping->publisherAsset->publisher_adserver_id,
-                'zoneName' => $zone->zone_name . '_' . now(),
-                'type' => 0,
-                'width' => $zone->width,
-                'height' => $zone->height,
-            ];
-            // Send GET request with Basic Auth
-            $endpoint = env('AD_SERVER_BASE_URL') . '/zon/new';
-            $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint, $payload);
-            $zone_adserver_id = $response->object()->zoneId;
 
-            $campaignMapping->update([
-                'publisher_zone_adserver_id' => $zone_adserver_id,
-            ]);
-            $campaignMapping->refresh();
-            // Payload data
-            $payload = [
-                'advertiserId' => (int)$campaignMapping->campaign->advertiser_adserver_id,
-                'campaignName' => $campaignMapping->campaign->campaign_name . '_' . now(),
-                'startDate' => $campaignMapping->campaign->start_date,
-                'endDate' => $campaignMapping->campaign->end_date,
-                'impressions' => 10000,
-                'revenueType' => 1,
-                'revenue' => 12.50,
-                'weight' => 1
-            ];
+        if ($campaignMapping->status == PublisherCampaignStatus::APPROVE) {
+            try {
+                // Step 1: Create Zone on AdServer
+                $zoneAdServerId = AdServer::createZone(
+                    (int) $campaignMapping->publisherAsset->publisher_adserver_id,
+                    $zone->zone_name . '_' . now(),
+                    $zone->width,
+                    $zone->height
+                );
 
-            Log::info('From publish campaign to payload', $payload);
-            // Send GET request with Basic Auth
-            $endpoint = env('AD_SERVER_BASE_URL') . '/cam/new';
-            $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint, $payload);
+                $campaignMapping->update([
+                    'publisher_zone_adserver_id' => $zoneAdServerId,
+                ]);
+                $campaignMapping->refresh();
 
-            Log::info('From publish campaign to adserver zone reponse', $response->json());
-            $campaign_adserver_id = $response->object()->campaignId;
-            $campaignMapping->update([
-                'campaign_adserver_id' => $campaign_adserver_id,
-            ]);
-            $campaignMapping->refresh();
+                // Step 2: Create Campaign on AdServer
+                $campaignAdServerId = AdServer::createCampaign(
+                    (int) $campaignMapping->campaign->advertiser_adserver_id,
+                    $campaignMapping->campaign->campaign_name . '_' . now(),
+                    $campaignMapping->start_date,
+                    $campaignMapping->end_date
+                );
+
+                $campaignMapping->update([
+                    'campaign_adserver_id' => $campaignAdServerId,
+                ]);
+                $campaignMapping->refresh();
+
+                // Step 3: Upload Banner to AdServer
+                if (!$campaignMapping->hasMedia('banner')) {
+                    Log::error('Campaign does not have a banner for zone ' . $zone->zone_name);
+                    return;
+                }
+
+                $banner = $campaignMapping->getFirstMedia('banner');
+
+                $bannerAdServerId = AdServer::uploadBanner(
+                    (int) $campaignAdServerId,
+                    $banner->name,
+                    $banner->getUrl(),
+                    $campaignMapping->campaign->target_url,
+                    $campaignMapping->publisherZone->width,
+                    $campaignMapping->publisherZone->height
+                );
+
+                $campaignMapping->update([
+                    'banner_adserver_id' => $bannerAdServerId,
+                ]);
+                $campaignMapping->refresh();
+
+                // Step 4: Link Zone to Campaign
+                $success = AdServer::linkZoneToCampaign(
+                    (int) $zoneAdServerId,
+                    (int) $campaignAdServerId
+                );
+
+                $campaignMapping->update([
+                    'notes' => null,
+                    'is_active' => $success,
+                ]);
 
 
-            if (!$campaignMapping->hasMedia('banner')) {
-                Log::error('Campaign does not have banner for zone ' . $zone->name);
-                return;
-            }
-            $banner = $campaignMapping->getFirstMedia('banner');
+                if (!$campaignMapping->is_active) {
+                    throw new HttpException(500, "Campaign was unable to publish. Try again later.");
+                }
+                $campaignMapping->refresh();
 
-            // Payload data
-            $payload = [
-                'campaignId' => (int)$campaignMapping->campaign_adserver_id,
-                'bannerName' => $banner->name,
-                'storageType' => "url",
-                'imageURL' => $banner->getUrl(),
-                'url' => $campaignMapping->campaign->target_url,
-                'width' => $campaignMapping->publisherZone->width,
-                'height' => $campaignMapping->publisherZone->height
-            ];
+                $latestPause = $campaignMapping->pauseHistories()
+                    ->whereNull('resumed_at')
+                    ->latest()
+                    ->first();
 
-            // Send GET request with Basic Auth
-            $endpoint = env('AD_SERVER_BASE_URL') . '/bnn/new';
-            $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint, $payload);
-
-            $banner_adserver_id = $response->object()->bannerId;
-            $campaignMapping->update([
-                'banner_adserver_id' => $banner_adserver_id,
-            ]);
-
-            $campaignMapping->refresh();
-
-            $endpoint = env('AD_SERVER_BASE_URL') . '/zon/' . $campaignMapping->publisher_zone_adserver_id . '/cam/' . $campaignMapping->campaign_adserver_id;
-            $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint);
-            $isActive = $response->body() === '{"OK"}';
-            $campaignMapping->update([
-                'is_active' => $isActive,
-            ]);
-            $campaignMapping->refresh();
-            if (!$campaignMapping->is_active) {
-                throw new HttpException("Campaign was unable to publish. Try again later.");
+                if ($latestPause) {
+                    $latestPause->update([
+                        'resumed_at' => now(),
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('Failed to publish campaign mapping to AdServer: ' . $e->getMessage(), [
+                    'campaign_mapping_id' => $campaignMapping->id
+                ]);
+                throw new HttpException(500, "Failed to publish campaign mapping. Please try again later.");
             }
         }
     }

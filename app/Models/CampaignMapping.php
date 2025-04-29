@@ -69,6 +69,11 @@ class CampaignMapping extends Model implements HasMedia
         return $this->belongsTo(Zone::class, 'publisher_zone_id', 'id');
     }
 
+    public function pauseHistories()
+    {
+        return $this->hasMany(CampaignMappingPauseHistory::class);
+    }
+
     public function registerMediaCollections(): void
     {
 

@@ -9,6 +9,7 @@ use App\Enums\RolesEnum;
 use App\Events\PublishCampaignMappingToAdServer;
 use App\Events\SendCampaignCodesToPublishers;
 use App\Exceptions\SecureApiException;
+use App\Facades\AdServer;
 use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AssetZoneResource;
@@ -770,6 +771,10 @@ class PublisherOtpController extends Controller
             'status' => 'required',
             'notes' => 'nullable'
         ]);
+        if (now()->greaterThan(Carbon::parse($campaignMapping->end_date))) {
+            return $this->errorResponse('Campaign mapping has already expired. Cannot update status.');
+        }
+
         if($campaignMapping->campaign->status == CampaignStatus::PUBLISH){
 
             $campaignMapping->status  = $request->status;
@@ -778,11 +783,17 @@ class PublisherOtpController extends Controller
             $campaignMapping->refresh();
 
             if($request->status != PublisherCampaignStatus::APPROVE->value){
-                $endpoint = env('AD_SERVER_BASE_URL').'/zon/'.$campaignMapping->publisher_zone_adserver_id;
-                $res = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->delete($endpoint);
-                if(!$res->ok()){
-                    Log::error('Request failed with status: ' . $res->status().$res->body());
-                    throw new \Exception('Unable to process delete zone from ad-server request');
+                $campaignMapping->pauseHistories()->create([
+                    'paused_at' => now(),
+                ]);
+
+                try {
+                    AdServer::deleteZone($campaignMapping->publisher_zone_adserver_id);
+                } catch (\Throwable $e) {
+                    Log::error('Failed to delete zone from AdServer: '.$e->getMessage(), [
+                        'zone_adserver_id' => $campaignMapping->publisher_zone_adserver_id
+                    ]);
+                    return $this->errorResponse('Failed to delete zone from AdServer: '.$e->getMessage());
                 }
                 $campaignMapping->is_active = false;
                 $campaignMapping->code = null;

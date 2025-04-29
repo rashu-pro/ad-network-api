@@ -3,10 +3,12 @@
 namespace App\Listeners;
 
 use App\Events\AdvertiserRegistered;
+use App\Facades\AdServer;
 use App\Facades\SecureApi;
 use App\Models\Advertiser;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class AddAdvertiserToAdServer
 {
@@ -24,23 +26,45 @@ class AddAdvertiserToAdServer
     public function handle(AdvertiserRegistered $event): void
     {
         $advertiserRegistered = $event->advertiser;
-        $secureAdvertiser = SecureApi::getUser($advertiserRegistered->secure_api_id,$advertiserRegistered->email);
-        // Payload data
-        $payload = [
-            'advertiserName' => $secureAdvertiser['name'] ?? 'test_advertiser_'.$advertiserRegistered->id,
-            'contactName'    => $secureAdvertiser['name'] ?? 'test_advertiser_'.$advertiserRegistered->id,
-            'emailAddress'   => $advertiserRegistered->email,
-            'username'       => $advertiserRegistered->email,
-        ];
 
-        // Send GET request with Basic Auth
-        $endpoint = env('AD_SERVER_BASE_URL').'/adv/new';
-        $response = Http::withBasicAuth(env('AD_SERVER_SUPER_ADMIN_USERNAME'), env('AD_SERVER_SUPER_ADMIN_PASSWORD'))->post($endpoint, $payload);
-        $advertiser_id = $response->object()->advertiserId;
+        try {
+            $secureAdvertiser = SecureApi::getUser(
+                $advertiserRegistered->secure_api_id,
+                $advertiserRegistered->email
+            );
 
-        //After the successful response add the advertiser_id into database
-        $advertiser = User::find($advertiserRegistered->id);
-        $advertiser->adserver_id = $advertiser_id;
-        $advertiser->save();
+            $advertiserName = $secureAdvertiser['businessName'] ?? 'test_advertiser_' . $advertiserRegistered->id;
+            $contactName = $secureAdvertiser['businessName'] ?? 'test_advertiser_' . $advertiserRegistered->id;
+
+            try {
+                $advertiserId = AdServer::createAdvertiser(
+                    $advertiserName,
+                    $contactName,
+                    $advertiserRegistered->email
+                );
+
+                $advertiser = User::find($advertiserRegistered->id);
+                $advertiser->adserver_id = $advertiserId;
+                $advertiser->save();
+            } catch (\Throwable $e) {
+                Log::error('AdServer advertiser creation failed', [
+                    'email' => $advertiserRegistered->email,
+                    'message' => $e->getMessage(),
+                    'payload' => [
+                        'advertiserName' => $advertiserName,
+                        'contactName' => $contactName,
+                        'emailAddress' => $advertiserRegistered->email,
+                    ]
+                ]);
+            }
+
+        } catch (\Throwable $e) {
+            Log::error('Failed to retrieve secure advertiser info', [
+                'secure_api_id' => $advertiserRegistered->secure_api_id,
+                'email' => $advertiserRegistered->email,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
+
 }

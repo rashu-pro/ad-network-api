@@ -81,6 +81,7 @@ Route::prefix('advertiser')->middleware('auth:api')->group(function (){
     Route::post('/update-campaign/{campaign}',[\App\Http\Controllers\Api\AdvertiserOptController::class,'updateCampaign'])->middleware('can:update,campaign');
     Route::get('/campaigns',[\App\Http\Controllers\Api\AdvertiserOptController::class,'allCampaigns'])->middleware('permission:view own campaign,api');
     Route::get('/campaign/{campaign}',[\App\Http\Controllers\Api\AdvertiserOptController::class,'getCampaign'])->middleware('can:getCampaign,campaign');
+    Route::post('/campaign/del/{campaign}',[\App\Http\Controllers\Api\AdvertiserOptController::class,'deleteCampaign'])->middleware('can:getCampaign,campaign');
     Route::get('/upload-campaign-banner-for-mapping/{campaignMapping}',[\App\Http\Controllers\Api\AdvertiserOptController::class,'reuploadToAsset'])->middleware('can:reuploadBanner,campaignMapping');
 });
 

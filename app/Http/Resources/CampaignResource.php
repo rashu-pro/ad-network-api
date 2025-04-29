@@ -2,24 +2,19 @@
 
 namespace App\Http\Resources;
 
-use App\Enums\RolesEnum;
 use App\Facades\SecureApi;
-use App\HttpModels\Publisher;
+use App\Models\Campaign;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Log;
+use App\Services\BillingService;
 
 class CampaignResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
-
+        $billingService = new BillingService(); // use existing methods
+        $campaign = Campaign::findOrFail($this->id);
         return [
             'campaign' => [
                 'id' => $this->id,
@@ -27,20 +22,23 @@ class CampaignResource extends JsonResource
                 'advertiser_adserver_id' => $this->advertiser_adserver_id,
                 'status' => $this->status,
                 'is_draft' => $this->is_draft,
+                'bill_till_now' => $billingService->calculateCampaignBillTillNow($campaign),
+                'total_bill' => $billingService->calculateTotalCampaignBill($campaign),
                 'advertiser' => $this->advertiserDetails($this->advertiser) ?? null
             ],
-            'publishers' => $this->campaignMappings()->get()->groupBy('publisher_id')->map(function ($groupedMappings) {
-                // Retrieve the first mapping in the group to extract publisher details
+            'publishers' => $this->campaignMappings()->get()->groupBy('publisher_id')->map(function ($groupedMappings) use ($billingService) {
                 $firstMapping = $groupedMappings->first();
                 $publisher = $firstMapping->publisher;
                 $securePublisher = SecureApi::getUser($publisher->secure_api_id, $publisher->email);
+
                 return [
                     'publisher_id' => $publisher->id,
                     'publisher_name' => $securePublisher['businessName'],
                     'publisher_address' => $securePublisher['businessInfo']['address'],
                     'logo' => $securePublisher['businessInfo']['logoUrl'],
-                    'assets' => $groupedMappings->map(function ($mapping) {
-                        $asset = $mapping->publisherAsset; // Get asset details from mapping
+                    'assets' => $groupedMappings->map(function ($mapping) use ($billingService) {
+                        $asset = $mapping->publisherAsset;
+
                         return [
                             'id' => $asset->id,
                             'mapping_id' => $mapping->id,
@@ -61,6 +59,7 @@ class CampaignResource extends JsonResource
                             'banner' => $mapping->hasMedia('banner') ? $mapping->getFirstMedia('banner')->getUrl() : '#',
                             'status' => $mapping->status,
                             'notes' => $mapping->notes,
+                            'bill' => $billingService->calculateCampaignMappingBill($mapping),
                         ];
                     })->toArray(),
                 ];
@@ -68,7 +67,8 @@ class CampaignResource extends JsonResource
         ];
     }
 
-    private function advertiserDetails(User $advertiser){
+    private function advertiserDetails(User $advertiser)
+    {
         $secureAdvertiser = SecureApi::getUser($advertiser->secure_api_id, $advertiser->email);
         return [
             'name' => $secureAdvertiser['businessName'],

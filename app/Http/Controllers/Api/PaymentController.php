@@ -10,6 +10,7 @@ use App\Events\SendCampaignCodesToPublishers;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\User;
+use App\Services\PaymentService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -73,5 +74,21 @@ class PaymentController extends Controller
         DB::commit();
         event(new CampaignPublished($campaign));
         return $this->successResponse('Payment successful');
+    }
+
+    public function makePayment(Request $request, $campaignId)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'payment_method' => 'required|in:card,bank_transfer,manual',
+            'reference' => 'nullable|string',
+        ]);
+
+        $campaign = Campaign::with('payments')->findOrFail($campaignId);
+
+        $paymentService = new PaymentService();
+        $paymentService->processPayment($campaign, $request->amount, $request->payment_method, $request->reference);
+
+        return response()->json(['message' => 'Payment processed.']);
     }
 }

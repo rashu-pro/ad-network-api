@@ -65,4 +65,10 @@ class Campaign extends Model implements HasMedia
         return $this->belongsTo(User::class, 'advertiser_id', 'id');
     }
 
+    public function payments()
+    {
+        return $this->hasMany(CampaignPayment::class);
+    }
+
+
 }

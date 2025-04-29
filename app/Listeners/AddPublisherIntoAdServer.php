@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\PublisherRegistered;
 use App\Models\Publisher;
+use App\Models\User;
 
 class AddPublisherIntoAdServer
 {
@@ -27,7 +28,7 @@ class AddPublisherIntoAdServer
         $publisher_id = 999;
 
         // After successful response add the publisher id into publishers table
-        $publisher = Publisher::find($publisherRegistered->id);
+        $publisher = User::find($publisherRegistered->id);
         $publisher->publisher_id = $publisher_id;
         $publisher->save();
     }
