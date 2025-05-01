@@ -5,6 +5,7 @@ use App\Enums\PublisherCampaignStatus;
 use App\Enums\RolesEnum;
 use App\Enums\TokenAbility;
 use App\Events\CampaignPublished;
+use App\Http\Controllers\Api\AdRatingController;
 use App\Http\Controllers\Api\Auth\AdminLoginController;
 use App\Models\Asset;
 use App\Models\Campaign;
@@ -85,6 +86,13 @@ Route::prefix('advertiser')->middleware('auth:api')->group(function (){
     Route::get('/upload-campaign-banner-for-mapping/{campaignMapping}',[\App\Http\Controllers\Api\AdvertiserOptController::class,'reuploadToAsset'])->middleware('can:reuploadBanner,campaignMapping');
     Route::get('/payments', [\App\Http\Controllers\Api\AdvertiserOptController::class,'listAdvertiserPayments'])->middleware(['auth:sanctum', 'role:advertiser']);
     Route::middleware(['role:advertiser'])->get('/payments/{payment}', [\App\Http\Controllers\Api\AdvertiserOptController::class, 'showAdvertiserPayment']);
+    Route::middleware(['role:advertiser'])->prefix('campaign')->group(function () {
+        Route::get('/ratings/{mapping}', [AdRatingController::class, 'show']);
+        Route::post('/ratings/{mapping}', [AdRatingController::class, 'store']);
+        Route::put('/ratings/{mapping}', [AdRatingController::class, 'update']);
+        Route::delete('/ratings/{mapping}', [AdRatingController::class, 'destroy']);
+    });
+
 });
 
 Route::prefix('publisher')->middleware('auth:api')->group(function (){

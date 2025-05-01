@@ -74,6 +74,12 @@ class CampaignMapping extends Model implements HasMedia
         return $this->hasMany(CampaignMappingPauseHistory::class);
     }
 
+    public function rating()
+    {
+        return $this->hasOne(AdRating::class);
+    }
+
+
     public function registerMediaCollections(): void
     {
 
