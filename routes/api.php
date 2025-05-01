@@ -83,6 +83,8 @@ Route::prefix('advertiser')->middleware('auth:api')->group(function (){
     Route::get('/campaign/{campaign}',[\App\Http\Controllers\Api\AdvertiserOptController::class,'getCampaign'])->middleware('can:getCampaign,campaign');
     Route::post('/campaign/del/{campaign}',[\App\Http\Controllers\Api\AdvertiserOptController::class,'deleteCampaign'])->middleware('can:getCampaign,campaign');
     Route::get('/upload-campaign-banner-for-mapping/{campaignMapping}',[\App\Http\Controllers\Api\AdvertiserOptController::class,'reuploadToAsset'])->middleware('can:reuploadBanner,campaignMapping');
+    Route::get('/payments', [\App\Http\Controllers\Api\AdvertiserOptController::class,'listAdvertiserPayments'])->middleware(['auth:sanctum', 'role:advertiser']);
+    Route::middleware(['role:advertiser'])->get('/payments/{payment}', [\App\Http\Controllers\Api\AdvertiserOptController::class, 'showAdvertiserPayment']);
 });
 
 Route::prefix('publisher')->middleware('auth:api')->group(function (){
@@ -96,6 +98,8 @@ Route::prefix('publisher')->middleware('auth:api')->group(function (){
     Route::get('/campaigns',[\App\Http\Controllers\Api\PublisherOtpController::class,'allCampaigns'])->middleware('role:ad_publisher,api');
     Route::get('/available-zones/{asset}', [\App\Http\Controllers\Api\PublisherOtpController::class,'availableZones'])->middleware('role:ad_publisher,api');
     Route::post('/get-campaign-ad-zone-id-by-mapping/{campaignMapping}', [\App\Http\Controllers\Api\PublisherOtpController::class,'getCampaignScript'])->middleware('can:getAdserverZoneIdByMapping,campaignMapping');
+    Route::get('/payments', [\App\Http\Controllers\Api\PublisherOtpController::class,'bills'])->middleware(['auth:sanctum', 'role:ad_publisher,api']);
+    Route::middleware(['role:ad_publisher'])->get('/publisher/earnings/{mapping}', [\App\Http\Controllers\Api\PublisherOtpController::class, 'showPublisherEarning']);
 });
 //Route::post('user/register',[UserRegisteredController::class,'userCreate']);
 

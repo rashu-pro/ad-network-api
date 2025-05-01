@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\AssetZoneResource;
 use App\Http\Resources\CampaignResource;
 use App\Http\Resources\PublisherAssetResource;
+use App\Http\Resources\PublisherEarningDetailsResource;
 use App\HttpModels\Publisher;
 use App\Models\Asset;
 use App\Models\Campaign;
@@ -27,6 +28,7 @@ use App\Repositories\Interfaces\AssetValuationRepositoryInterface;
 use App\Repositories\Interfaces\CampaignMappingRepositoryInterface;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
 use App\Services\AdvertiserService;
+use App\Services\BillingService;
 use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -954,4 +956,35 @@ class PublisherOtpController extends Controller
             })->toArray()
         ]);
     }
+
+    public function bills(Request $request)
+    {
+        $publisherId = $request->user()->id;
+
+        $mappings = CampaignMapping::where('publisher_id', $publisherId)
+            ->with('campaign', 'publisherAsset', 'pauseHistories')
+            ->get();
+
+        $billing = new BillingService();
+
+        return response()->json($mappings->map(function ($mapping) use ($billing) {
+            return [
+                'campaign_name' => $mapping->campaign->campaign_name,
+                'asset_name' => $mapping->publisherAsset->asset->name ?? 'N/A',
+                'price_per_hour' => $mapping->publisherAsset->price_per_hour,
+                'billable_hours' => $billing->calculateCampaignMappingHours($mapping),
+                'amount_earned' => $billing->calculateCampaignMappingBill($mapping),
+            ];
+        }));
+    }
+
+    public function showPublisherEarning(Request $request, CampaignMapping $mapping)
+    {
+        if ($mapping->publisher_id !== $request->user()->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        return new PublisherEarningDetailsResource($mapping);
+    }
+
 }

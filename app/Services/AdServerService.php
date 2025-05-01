@@ -91,6 +91,37 @@ class AdServerService
     }
 
     /**
+     * Update an existing campaign on the AdServer
+     *
+     * @throws \Exception
+     */
+    public function updateCampaign(
+        int $campaignId,
+        string $campaignName,
+        string $startDate,
+        string $endDate
+    ): bool {
+        $payload = [
+            'campaignName' => $campaignName,
+            'weight'       => 2,
+            'startDate'    => $startDate,
+            'endDate'      => $endDate,
+        ];
+
+        $endpoint = $this->getUrl("cam/{$campaignId}");
+        $response = $this->httpClient
+            ->withHeaders(['Content-Type' => 'text/javascript'])
+            ->post($endpoint, $payload);
+
+        if (!$response->successful()) {
+            throw new \Exception('Failed to update campaign: ' . $response->body());
+        }
+
+        return true;
+    }
+
+
+    /**
      * Upload a banner for a campaign
      */
     public function uploadBanner(int $campaignId, string $bannerName, string $imageUrl, string $targetUrl, int $width, int $height): int

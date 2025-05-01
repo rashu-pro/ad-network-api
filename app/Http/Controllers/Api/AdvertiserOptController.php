@@ -9,10 +9,13 @@ use App\Exceptions\SecureApiException;
 use App\Facades\AdServer;
 use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AdvertiserPaymentResource;
+use App\Http\Resources\CampaignPaymentResource;
 use App\Http\Resources\CampaignResource;
 use App\Listeners\PublishCampaignToAdserver;
 use App\Models\Campaign;
 use App\Models\CampaignMapping;
+use App\Models\CampaignPayment;
 use App\Models\User;
 use App\Models\Zone;
 use App\Services\AdvertiserService;
@@ -21,6 +24,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -654,6 +658,29 @@ class AdvertiserOptController extends Controller
         $campaign->update($request->only(
             'campaign_name', 'target_url', 'is_draft', 'status'
         ));
+        try {
+            foreach ($campaign->mappings as $mapping) {
+                $mapping->update([
+                    'start_date' => $request->start_date,
+                    'end_date' => $request->end_date
+                ]);
+
+                if (!empty($mapping->campaign_adserver_id)) {
+                    AdServer::updateCampaign(
+                        $mapping->campaign_adserver_id,
+                        $campaign->campaign_name,
+                        $mapping->start_date,
+                        $mapping->end_date
+                    );
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to update campaign on AdServer', [
+                'campaign_id' => $campaign->id,
+                'error' => $e->getMessage()
+            ]);
+            return $this->errorResponse('Failed to update campaign in AdServer: ' . $e->getMessage());
+        }
         return $this->successResponse(message: 'updated successfully', data: new CampaignResource($campaign));
     }
 
@@ -814,6 +841,20 @@ class AdvertiserOptController extends Controller
         }
     }
 
+    public function listAdvertiserPayments(Request $request)
+    {
+        $user = Auth::guard('api')->user(); // advertiser
+        return CampaignPaymentResource::collection(
+            CampaignPayment::where('advertiser_id', $user->id)->latest()->get()
+        );
+    }
+    public function showAdvertiserPayment(Request $request, CampaignPayment $payment)
+    {
+        // Ensure advertiser owns this payment
+        if ($payment->advertiser_id !== Auth::guard('api')->user()->id) {
+            abort(403, 'Unauthorized');
+        }
 
-
+        return new AdvertiserPaymentResource($payment);
+    }
 }
