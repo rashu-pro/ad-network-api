@@ -5,6 +5,7 @@ use App\Enums\PublisherCampaignStatus;
 use App\Enums\RolesEnum;
 use App\Enums\TokenAbility;
 use App\Events\CampaignPublished;
+use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AdRatingController;
 use App\Http\Controllers\Api\Auth\AdminLoginController;
 use App\Models\Asset;
@@ -111,6 +112,7 @@ Route::prefix('publisher')->middleware('auth:api')->group(function (){
     Route::middleware(['role:ad_publisher'])->post('reject-asset-campaign/{asset}', [\App\Http\Controllers\Api\PublisherOtpController::class, 'rejectAllCampaigns']);
 });
 //Route::post('user/register',[UserRegisteredController::class,'userCreate']);
+Route::middleware(['auth:api'])->post('/account', [AccountController::class, 'deleteAccount']);
 
 
 Route::prefix('external')->group(function (){
