@@ -987,4 +987,27 @@ class PublisherOtpController extends Controller
         return new PublisherEarningDetailsResource($mapping);
     }
 
+    public function rejectAllCampaigns(Request $request, PublisherAsset $asset)
+    {
+        $publisherId = $request->user()->id;
+
+        if ($asset->publisher_id !== $publisherId) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $updated = CampaignMapping::where('publisher_asset_id', $asset->id)
+            ->where('publisher_id', $publisherId)
+            ->whereNotIn('status', ['pending', 'completed']) // only reject eligible
+            ->update([
+                'status' => 'conditionally_reject',
+                'notes' => 'Rejected by publisher via bulk API.',
+                'updated_at' => now(),
+            ]);
+
+        return response()->json([
+            'message' => 'Campaigns rejected successfully.',
+            'affected_mappings' => $updated
+        ]);
+    }
+
 }

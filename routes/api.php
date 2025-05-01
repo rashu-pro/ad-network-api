@@ -107,7 +107,8 @@ Route::prefix('publisher')->middleware('auth:api')->group(function (){
     Route::get('/available-zones/{asset}', [\App\Http\Controllers\Api\PublisherOtpController::class,'availableZones'])->middleware('role:ad_publisher,api');
     Route::post('/get-campaign-ad-zone-id-by-mapping/{campaignMapping}', [\App\Http\Controllers\Api\PublisherOtpController::class,'getCampaignScript'])->middleware('can:getAdserverZoneIdByMapping,campaignMapping');
     Route::get('/payments', [\App\Http\Controllers\Api\PublisherOtpController::class,'bills'])->middleware(['auth:sanctum', 'role:ad_publisher,api']);
-    Route::middleware(['role:ad_publisher'])->get('/publisher/earnings/{mapping}', [\App\Http\Controllers\Api\PublisherOtpController::class, 'showPublisherEarning']);
+    Route::middleware(['role:ad_publisher'])->get('earnings/{mapping}', [\App\Http\Controllers\Api\PublisherOtpController::class, 'showPublisherEarning']);
+    Route::middleware(['role:ad_publisher'])->post('reject-asset-campaign/{asset}', [\App\Http\Controllers\Api\PublisherOtpController::class, 'rejectAllCampaigns']);
 });
 //Route::post('user/register',[UserRegisteredController::class,'userCreate']);
 
