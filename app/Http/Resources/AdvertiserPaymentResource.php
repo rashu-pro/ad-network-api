@@ -16,7 +16,7 @@ class AdvertiserPaymentResource extends JsonResource
     {
         return [
             'payment_id' => $this->id,
-            'amount' => $this->amount,
+            'amount' => round($this->amount,2),
             'payment_method' => $this->payment_method,
             'reference' => $this->reference,
             'campaign' => [

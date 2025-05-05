@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enums\PublisherCampaignStatus;
 use App\Enums\RolesEnum;
 use App\Events\PublishCampaignMappingToAdServer;
+use App\Events\SendCampaignCodesToPublishers;
 use App\Exceptions\SecureApiException;
 use App\Facades\AdServer;
 use App\Facades\SecureApi;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\AdvertiserPaymentResource;
 use App\Http\Resources\CampaignPaymentResource;
 use App\Http\Resources\CampaignResource;
+use App\Listeners\GenerateCampaignCodes;
 use App\Listeners\PublishCampaignToAdserver;
 use App\Models\Campaign;
 use App\Models\CampaignMapping;
@@ -828,6 +830,12 @@ class AdvertiserOptController extends Controller
             }
 
             if (!empty($campaign->campaign_adserver_id)) {
+                foreach ($campaign->mappings as $mapping){
+                    $mapping->update([
+                        'code' => null
+                    ]);
+                }
+                event(new SendCampaignCodesToPublishers($campaign->mappings));
                 AdServer::deleteCampaign($campaign->campaign_adserver_id);
             }
 
