@@ -829,15 +829,17 @@ class AdvertiserOptController extends Controller
                 return $this->errorResponse('Unauthorized to delete this campaign', 403);
             }
 
-            if (!empty($campaign->campaign_adserver_id)) {
-                foreach ($campaign->mappings as $mapping){
+
+            foreach ($campaign->mappings as $mapping){
+                if (!empty($mapping->campaign_adserver_id)) {
+                    AdServer::deleteCampaign($mapping->campaign_adserver_id);
                     $mapping->update([
                         'code' => null
                     ]);
                 }
-                event(new SendCampaignCodesToPublishers($campaign->mappings));
-                AdServer::deleteCampaign($campaign->campaign_adserver_id);
             }
+            event(new SendCampaignCodesToPublishers($campaign->mappings()->withTrashed()->get()));
+
 
             // Delete the campaign and its related mappings, banners if any
             $campaign->mappings()->delete();
