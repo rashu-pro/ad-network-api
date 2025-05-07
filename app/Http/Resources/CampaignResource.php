@@ -22,8 +22,8 @@ class CampaignResource extends JsonResource
                 'advertiser_adserver_id' => $this->advertiser_adserver_id,
                 'status' => $this->status,
                 'is_draft' => $this->is_draft,
-                'bill_till_now' => $billingService->calculateCampaignBillTillNow($campaign),
-                'total_bill' => $billingService->calculateTotalCampaignBill($campaign),
+                'bill_till_now' => round($billingService->calculateCampaignBillTillNow($campaign), 2),
+                'total_bill' => round($billingService->calculateTotalCampaignBill($campaign), 2),
                 'advertiser' => $this->advertiserDetails($this->advertiser) ?? null
             ],
             'publishers' => $this->campaignMappings()->get()->groupBy('publisher_id')->map(function ($groupedMappings) use ($billingService) {
