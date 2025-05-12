@@ -91,7 +91,7 @@ class SecureApiService
             'User-Agent' => 'MyCustomUserAgent/1.0',
             'Accept' => 'application/json',
             'Referer' => url()->current(),
-        ])->post("https://secure-api.net/api/v1/auth/token", [
+        ])->post(env('SECURE_API_AUTHENTICATION_URL')."/api/v1/auth/token", [
             'grant_type' => 'password',
             'username' => $data['username'],
             'password' => $data['password'],
