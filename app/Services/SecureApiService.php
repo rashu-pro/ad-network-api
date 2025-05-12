@@ -87,7 +87,11 @@ class SecureApiService
      */
     public function login(array $data)
     {
-        $response = Http::asForm()->post("https://alpha.secure-api.dev/api/v1/auth/token", [
+        $response = Http::asForm()->withHeaders([
+            'User-Agent' => 'MyCustomUserAgent/1.0',
+            'Accept' => 'application/json',
+            'Referer' => url()->current(),
+        ])->post("https://secure-api.net/api/v1/auth/token", [
             'grant_type' => 'password',
             'username' => $data['username'],
             'password' => $data['password'],
