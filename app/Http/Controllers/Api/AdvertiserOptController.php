@@ -21,6 +21,7 @@ use App\Models\CampaignPayment;
 use App\Models\User;
 use App\Models\Zone;
 use App\Services\AdvertiserService;
+use App\Services\BillingService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -29,6 +30,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
@@ -147,6 +149,57 @@ class AdvertiserOptController extends Controller
             $campaigns = CampaignResource::collection($user->campaigns()->latest()->get());
             return $this->successResponse(message: 'All campaigns',data: $campaigns);
         }catch (\Exception $e){
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    public function getMappings(Request $request)
+    {
+        try {
+            $request->validate([
+                'status' => ['required', 'string', Rule::in(PublisherCampaignStatus::values())],
+            ]);
+
+            $user = Auth::guard('sanctum')->user();
+            $billingService = new BillingService();
+
+            $mappings = CampaignMapping::where('advertiser_id', $user->id)
+                ->where('status', $request->status)
+                ->latest(30)
+                ->get()
+                ->map(function ($mapping) use ($billingService) {
+                    $asset = $mapping->publisherAsset;
+
+                    return [
+                        'id' => $asset->id,
+                        'mapping_id' => $mapping->id,
+                        'name' => $asset->asset->name,
+                        'price_per_hour' => $asset->price_per_hour,
+                        'calculated_price' => $mapping->calculated_price,
+                        'start_date' => $mapping->start_date,
+                        'end_date' => $mapping->end_date,
+                        'zone_id' => $mapping->publisher_zone_id,
+                        'zone_width' => $mapping->publisherZone->width,
+                        'zone_height' => $mapping->publisherZone->height,
+                        'zone_adserver_id' => $mapping->publisher_zone_adserver_id,
+                        'campaign_adserver_id' => $mapping->campaign_adserver_id,
+                        'url' => $mapping->publisherAsset->url,
+                        'target_url' => $mapping->campaign->target_url,
+                        'is_active' => $mapping->is_active,
+                        'note' => $mapping->notes,
+                        'banner' => $mapping->hasMedia('banner')
+                            ? $mapping->getFirstMedia('banner')->getUrl()
+                            : '#',
+                        'status' => $mapping->status,
+                        'notes' => $mapping->notes,
+                        'bill' => $billingService->calculateCampaignMappingBill($mapping),
+                    ];
+                })
+                ->toArray();
+
+            return $this->successResponse('Get mappings', $mappings);
+
+        } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
         }
     }
