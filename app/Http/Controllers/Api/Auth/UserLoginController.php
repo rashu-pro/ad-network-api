@@ -9,11 +9,14 @@ use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\AdvertiserLoginRequest;
 use App\Models\Advertiser;
+use App\Models\CampaignPayment;
 use App\Models\User;
+use App\Services\BillingService;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
 use OpenApi\Attributes as OA;
@@ -22,6 +25,13 @@ use Spatie\Permission\Models\Role;
 class UserLoginController extends Controller
 {
     use ApiResponse;
+
+    protected BillingService $billingService;
+
+    public function __construct(BillingService $billingService)
+    {
+        $this->billingService = $billingService;
+    }
 
     #[OA\Post(
         path: "/api/advertiser/login",
@@ -210,6 +220,69 @@ class UserLoginController extends Controller
         $refreshToken = $user->createToken('refresh_token', [TokenAbility::ISSUE_ACCESS_TOKEN->value], $refreshTokenExpiresAt)->plainTextToken;
         $secureApiUser = SecureApi::getUser($user->secure_api_id, $user->email);
 
+        $isAdvertiser = $user->hasRole(RolesEnum::ADVERTISER->value, 'api');
+        $isPublisher = $user->hasRole(RolesEnum::PUBLISHER->value, 'api');
+
+        // Initialize billing summary
+        $billingSummary = [];
+        $latestPayments = [];
+
+        if ($isAdvertiser) {
+            $campaigns = $user->campaigns()->with(['mappings.pauseHistories', 'mappings.publisherAsset'])->get();
+
+            $totalBillTillNow = 0;
+            $totalPaid = 0;
+
+            foreach ($campaigns as $campaign) {
+                $billTillNow = $this->billingService->calculateCampaignBillTillNow($campaign);
+
+                $paidAmount = CampaignPayment::where('campaign_id', $campaign->id)
+                    ->where('advertiser_id', $user->id)
+                    ->sum('amount');
+
+                $totalBillTillNow += $billTillNow;
+                $totalPaid += $paidAmount;
+            }
+
+            $billingSummary = [
+                'bill_till_now' => round($totalBillTillNow, 2),
+                'paid' => round($totalPaid, 2),
+                'due' => round(max($totalBillTillNow - $totalPaid, 0), 2),
+            ];
+
+            $payments = CampaignPayment::where('advertiser_id', $user->id)
+                ->with('campaign')
+                ->latest('payment_date')
+                ->take(10)
+                ->get();
+
+            $latestPayments = $payments->map(function ($payment) {
+                $cardLast4 = Str::afterLast($payment->reference, 'ending in ') ?: '****';
+
+                return [
+                    'title' => $payment->campaign
+                        ? 'Payment for Ad Campaign #' . $payment->campaign->id
+                        : 'Payment for Boosted Post',
+                    'amount' => (float) $payment->amount,
+                    'payment_date' => $payment->payment_date->format('F j, Y'),
+                    'payment_method' => 'Billed to ' . ucfirst($payment->payment_method) . ' ending in ' . $cardLast4,
+                    'status' => 'Completed', // or logic based if needed
+                ];
+            });
+        }
+
+        if ($isPublisher) {
+            $mappings = $user->publisherMappings()->with(['pauseHistories', 'publisherAsset'])->get();
+
+            $totalEarnings = $mappings->sum(function ($mapping) {
+                return $this->billingService->calculateCampaignMappingBill($mapping);
+            });
+
+            $billingSummary = [
+                'total_earnings' => round($totalEarnings, 2),
+            ];
+        }
+
         return $this->successResponse('Logged in successfully.', [
             'id' => $user->id,
             'companyKey' => $user->secure_api_id,
@@ -227,6 +300,8 @@ class UserLoginController extends Controller
             'token_type' => 'Bearer',
             'isAdvertiser' => $user->hasRole(RolesEnum::ADVERTISER->value,'api'),
             'isPublisher' => $user->hasRole(RolesEnum::PUBLISHER->value,'api'),
+            'billing_summary' => $billingSummary,
+            'recent_payments' => $latestPayments,
         ]);
     }
 }
