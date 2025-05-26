@@ -153,56 +153,6 @@ class AdvertiserOptController extends Controller
         }
     }
 
-    public function getMappings(Request $request)
-    {
-        try {
-            $request->validate([
-                'status' => ['required', 'string', Rule::in(PublisherCampaignStatus::values())],
-            ]);
-
-            $user = Auth::guard('sanctum')->user();
-            $billingService = new BillingService();
-
-            $mappings = CampaignMapping::where('advertiser_id', $user->id)
-                ->where('status', $request->status)
-                ->latest(30)
-                ->get()
-                ->map(function ($mapping) use ($billingService) {
-                    $asset = $mapping->publisherAsset;
-
-                    return [
-                        'id' => $asset->id,
-                        'mapping_id' => $mapping->id,
-                        'name' => $asset->asset->name,
-                        'price_per_hour' => $asset->price_per_hour,
-                        'calculated_price' => $mapping->calculated_price,
-                        'start_date' => $mapping->start_date,
-                        'end_date' => $mapping->end_date,
-                        'zone_id' => $mapping->publisher_zone_id,
-                        'zone_width' => $mapping->publisherZone->width,
-                        'zone_height' => $mapping->publisherZone->height,
-                        'zone_adserver_id' => $mapping->publisher_zone_adserver_id,
-                        'campaign_adserver_id' => $mapping->campaign_adserver_id,
-                        'url' => $mapping->publisherAsset->url,
-                        'target_url' => $mapping->campaign->target_url,
-                        'is_active' => $mapping->is_active,
-                        'note' => $mapping->notes,
-                        'banner' => $mapping->hasMedia('banner')
-                            ? $mapping->getFirstMedia('banner')->getUrl()
-                            : '#',
-                        'status' => $mapping->status,
-                        'notes' => $mapping->notes,
-                        'bill' => $billingService->calculateCampaignMappingBill($mapping),
-                    ];
-                })
-                ->toArray();
-
-            return $this->successResponse('Get mappings', $mappings);
-
-        } catch (\Exception $e) {
-            return $this->errorResponse($e->getMessage());
-        }
-    }
 
     #[OA\Post(
         path: "/api/advertiser/create-campaign",
