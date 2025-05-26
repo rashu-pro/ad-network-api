@@ -271,17 +271,17 @@ class UserLoginController extends Controller
             });
         }
 
-        if ($isPublisher) {
-            $mappings = $user->publisherMappings()->with(['pauseHistories', 'publisherAsset'])->get();
-
-            $totalEarnings = $mappings->sum(function ($mapping) {
-                return $this->billingService->calculateCampaignMappingBill($mapping);
-            });
-
-            $billingSummary = [
-                'total_earnings' => round($totalEarnings, 2),
-            ];
-        }
+//        if ($isPublisher) {
+//            $mappings = $user->publisherMappings()->with(['pauseHistories', 'publisherAsset'])->get();
+//
+//            $totalEarnings = $mappings->sum(function ($mapping) {
+//                return $this->billingService->calculateCampaignMappingBill($mapping);
+//            });
+//
+//            $billingSummary = [
+//                'total_earnings' => round($totalEarnings, 2),
+//            ];
+//        }
 
         return $this->successResponse('Logged in successfully.', [
             'id' => $user->id,
