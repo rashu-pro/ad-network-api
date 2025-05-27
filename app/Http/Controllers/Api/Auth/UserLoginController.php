@@ -228,6 +228,7 @@ class UserLoginController extends Controller
         $billingSummary = [];
         $latestPayments = [];
         $totalEarnings= 0;
+        $mappings = null;
 
         if ($isAdvertiser) {
             $campaigns = $user->campaigns()->with(['mappings.pauseHistories', 'mappings.publisherAsset'])->get();
