@@ -9,6 +9,7 @@ use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\AdvertiserLoginRequest;
 use App\Models\Advertiser;
+use App\Models\CampaignMapping;
 use App\Models\CampaignPayment;
 use App\Models\User;
 use App\Services\BillingService;
@@ -271,17 +272,16 @@ class UserLoginController extends Controller
             });
         }
 
-//        if ($isPublisher) {
-//            $mappings = $user->publisherMappings()->with(['pauseHistories', 'publisherAsset'])->get();
-//
-//            $totalEarnings = $mappings->sum(function ($mapping) {
-//                return $this->billingService->calculateCampaignMappingBill($mapping);
-//            });
-//
-//            $billingSummary = [
-//                'total_earnings' => round($totalEarnings, 2),
-//            ];
-//        }
+        if ($isPublisher) {
+            $mappings = CampaignMapping::with(['campaign', 'pauseHistories', 'publisherAsset'])
+                ->where('publisher_id', $user->id)
+                ->get();
+
+            $totalEarnings = $mappings->sum(function ($mapping) {
+                return $this->billingService->calculateCampaignMappingBill($mapping);
+            });
+
+        }
 
         return $this->successResponse('Logged in successfully.', [
             'id' => $user->id,
@@ -302,6 +302,7 @@ class UserLoginController extends Controller
             'isPublisher' => $user->hasRole(RolesEnum::PUBLISHER->value,'api'),
             'billing_summary' => $billingSummary,
             'recent_payments' => $latestPayments,
+            'total_earnings' => $totalEarnings,
         ]);
     }
 }
