@@ -303,6 +303,16 @@ class UserLoginController extends Controller
             'billing_summary' => $billingSummary,
             'recent_payments' => $latestPayments,
             'total_earnings' => $totalEarnings,
+            'earnings' => $mappings->map(function ($mapping) {
+                $campaign = $mapping->campaign;
+                return [
+                    'campaign_id' => $campaign->id,
+                    'campaign_name' => $campaign->name ?? 'Untitled Campaign',
+                    'total_earning' => round($this->billingService->calculateCampaignMappingBill($mapping), 2),
+                    'asset_name' => $mapping->publisherAsset->name ?? null,
+                    'pause_count' => $mapping->pauseHistories->count(),
+                ];
+            }),
         ]);
     }
 }
