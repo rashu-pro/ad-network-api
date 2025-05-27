@@ -227,6 +227,7 @@ class UserLoginController extends Controller
         // Initialize billing summary
         $billingSummary = [];
         $latestPayments = [];
+        $totalEarnings= 0;
 
         if ($isAdvertiser) {
             $campaigns = $user->campaigns()->with(['mappings.pauseHistories', 'mappings.publisherAsset'])->get();
