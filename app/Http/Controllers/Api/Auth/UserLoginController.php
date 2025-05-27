@@ -305,7 +305,7 @@ class UserLoginController extends Controller
             'billing_summary' => $billingSummary,
             'recent_payments' => $latestPayments,
             'total_earnings' => $totalEarnings,
-            'earnings' => $mappings->map(function ($mapping) {
+            'earnings' => $mappings ? $mappings->map(function ($mapping) {
                 $campaign = $mapping->campaign;
                 return [
                     'campaign_id' => $campaign->id,
@@ -314,7 +314,7 @@ class UserLoginController extends Controller
                     'asset_name' => $mapping->publisherAsset->name ?? null,
                     'pause_count' => $mapping->pauseHistories->count(),
                 ];
-            }),
+            }) : [],
         ]);
     }
 }
