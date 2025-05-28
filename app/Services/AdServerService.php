@@ -77,7 +77,7 @@ class AdServerService
         $payload = [
             'advertiserId' => $advertiserId,
             'campaignName' => $campaignName,
-            'startDate' => $startDate,
+//            'startDate' => $startDate,
             'endDate' => $endDate,
             'impressions' => 10000,
             'revenueType' => 1,
