@@ -74,7 +74,7 @@ class PaymentController extends Controller
         }
 
         DB::commit();
-        event(new CampaignPublished($campaign));
+//        event(new CampaignPublished($campaign));
         return $this->successResponse('Payment successful');
     }
 
