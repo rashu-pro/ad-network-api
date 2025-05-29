@@ -309,7 +309,7 @@ class UserLoginController extends Controller
                 $campaign = $mapping->campaign;
                 return [
                     'campaign_id' => $campaign->id,
-                    'campaign_name' => $campaign->name ?? 'Untitled Campaign',
+                    'campaign_name' => $campaign->campaign_name ?? 'Untitled Campaign',
                     'total_earning' => round($this->billingService->calculateCampaignMappingBill($mapping), 2),
                     'asset_name' => $mapping->publisherAsset->name ?? null,
                     'pause_count' => $mapping->pauseHistories->count(),
