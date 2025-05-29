@@ -105,12 +105,14 @@ class UserLoginController extends Controller
             $localUser = User::where('email', $user->email)
                 ->where('secure_api_id', $user->companyKey)
                 ->first();
-
-            if (!$localUser) {
+            $userRoles = explode(',', $user->roles);
+            var_dump($userRoles);
+            if (!$localUser && in_array('AdNetworkCompanyAdmin', $userRoles)) {
                 $localUser = User::create([
                     'email' => $user->email,
                     'secure_api_id' => $user->companyKey
                 ]);
+
 
                 if($user->isAdPublisher == true){
                     $publisherRole = app(Role::class)->findOrCreate(RolesEnum::PUBLISHER->value,'api');
