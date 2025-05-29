@@ -106,8 +106,11 @@ class UserLoginController extends Controller
                 ->where('secure_api_id', $user->companyKey)
                 ->first();
             $userRoles = explode(',', $user->roles);
-            var_dump($userRoles);
-            if (!$localUser && in_array('AdNetworkCompanyAdmin', $userRoles)) {
+
+            if (!$localUser) {
+                if(! in_array('AdNetworkCompanyAdmin', $userRoles)){
+                    return $this->errorResponse('User is not a AdNetworkCompanyAdmin');
+                }
                 $localUser = User::create([
                     'email' => $user->email,
                     'secure_api_id' => $user->companyKey
