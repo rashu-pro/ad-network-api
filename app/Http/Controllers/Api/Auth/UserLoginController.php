@@ -237,7 +237,6 @@ class UserLoginController extends Controller
 
         if ($isAdvertiser) {
             $campaigns = $user->campaigns()->with(['mappings.pauseHistories', 'mappings.publisherAsset'])->get();
-
             $totalBillTillNow = 0;
             $totalPaid = 0;
 
@@ -253,6 +252,7 @@ class UserLoginController extends Controller
             }
 
             $billingSummary = [
+                'campaign_count' => count($campaigns),
                 'bill_till_now' => round($totalBillTillNow, 2),
                 'paid' => round($totalPaid, 2),
                 'due' => round(max($totalBillTillNow - $totalPaid, 0), 2),
@@ -314,7 +314,7 @@ class UserLoginController extends Controller
                 $campaign = $mapping->campaign;
                 return [
                     'campaign_id' => $campaign->id,
-                    'campaign_name' => $campaign->name ?? 'Untitled Campaign',
+                    'campaign_name' => $campaign->campaign_name ?? 'Untitled Campaign',
                     'total_earning' => round($this->billingService->calculateCampaignMappingBill($mapping), 2),
                     'asset_name' => $mapping->publisherAsset->name ?? null,
                     'pause_count' => $mapping->pauseHistories->count(),
