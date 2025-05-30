@@ -839,9 +839,10 @@ class AdvertiserOptController extends Controller
                     $mapping->update([
                         'code' => null
                     ]);
+                    $mapping->refresh();
                 }
             }
-            event(new SendCampaignCodesToPublishers($campaign->mappings()->withTrashed()->get()));
+            event(new SendCampaignCodesToPublishers($campaign->mappings()->get()));
 
 
             // Delete the campaign and its related mappings, banners if any
