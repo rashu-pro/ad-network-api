@@ -1,6 +1,7 @@
 <?php
 namespace App\Console\Commands;
 
+use App\Enums\CampaignStatus;
 use App\Events\SendCampaignCodesToPublishers;
 use App\Facades\AdServer;
 use App\Models\CampaignMapping;
@@ -39,6 +40,16 @@ class CompleteExpiredCampaignMappings extends Command
                     'is_active' => false,
                     'code' => null
                 ]);
+                $campaign = $mapping->campaign;
+                $incompleteMappings = $campaign->mappings()
+                    ->where('status', '!=', PublisherCampaignStatus::COMPLETED)
+                    ->count();
+
+                if ($incompleteMappings === 0) {
+                    $campaign->update([
+                        'status' => CampaignStatus::COMPLETED->value,
+                    ]);
+                }
                 $mapping->refresh();
                 event(new SendCampaignCodesToPublishers($mapping));
                 $this->info("Updated mapping ID {$mapping->id} to COMPLETE.");
