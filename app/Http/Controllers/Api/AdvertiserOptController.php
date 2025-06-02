@@ -762,9 +762,13 @@ class AdvertiserOptController extends Controller
             return $this->errorResponse(message: 'Campaign already published', status: 409);
         }
         if($campaignMapping->status != PublisherCampaignStatus::APPROVE){
-            $campaignMapping->update(['status' => PublisherCampaignStatus::APPROVE->value]);
+            $campaignMapping->update(['status' => PublisherCampaignStatus::APPROVE->value,  'notes' => null]);
+            $campaignMapping->refresh();
         }
-        event(new PublishCampaignMappingToAdServer($campaignMapping));
+
+        if(Carbon::parse($campaignMapping->start_date)->lte(Carbon::today())){
+            event(new PublishCampaignMappingToAdServer($campaignMapping));
+        }
         return $this->successResponse(message: 'Campaign published');
     }
 
