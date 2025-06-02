@@ -790,7 +790,9 @@ class PublisherOtpController extends Controller
                 ]);
 
                 try {
-                    AdServer::deleteZone($campaignMapping->publisher_zone_adserver_id);
+                    if($hasCode = $campaignMapping->code){
+                        AdServer::deleteZone($campaignMapping->publisher_zone_adserver_id);
+                    }
                 } catch (\Throwable $e) {
                     Log::error('Failed to delete zone from AdServer: '.$e->getMessage(), [
                         'zone_adserver_id' => $campaignMapping->publisher_zone_adserver_id
@@ -804,7 +806,9 @@ class PublisherOtpController extends Controller
 //                Log::info('mapping: ', $campaignMapping);
                 $mappings = $campaignMapping->campaign->mappings;
                 Log::info('valid mapping: ', $mappings->toArray());
-                event(new SendCampaignCodesToPublishers($mappings));
+                if($hasCode){
+                    event(new SendCampaignCodesToPublishers($mappings));
+                }
             }else{
                 if($campaignMapping->is_active == false){
                     event(new PublishCampaignMappingToAdServer($campaignMapping));

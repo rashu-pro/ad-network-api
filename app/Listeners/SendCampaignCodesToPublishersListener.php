@@ -72,7 +72,7 @@ class SendCampaignCodesToPublishersListener
 
             // Get unique codes from all mappings for this publisher_asset_id
 
-            $codes = $mappings->pluck('code')->unique()->values()->toArray();
+            $codes = count($mappings) > 0 ? $mappings->pluck('code')->unique()->values()->toArray() : [];
 
             try {
 
