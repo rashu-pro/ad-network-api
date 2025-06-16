@@ -95,7 +95,7 @@ class PublishCampaignToAdserver
                 if($campaignMapping->publisher){
                     $publisher = SecureApi::getUser($campaignMapping->publisher->secure_api_id, $campaignMapping->publisher->email);
                     if($publisher){
-                        $publishers[] = $publisher['businessName'];
+                        $publishers[] = $publisher['businessName'].'-'.'<a href="'.$campaignMapping->publisherAsset->url.'">'.$campaignMapping->publisherAsset->asset->name.'</a>';
                     }
                 }
             }
@@ -110,7 +110,7 @@ class PublishCampaignToAdserver
                     "CampaignTitle" => $campaign->campaign_name,
                     "StartDate" => $campaign->mappings ? date_format(date_create($campaign->mappings->first()->start_date),'d M, Y') : null,
                     "EndDate" => $campaign->mappings ? date_format(date_create($campaign->mappings->first()->end_date),'d M, Y') : null,
-                    "Adpublisher" => implode(',',$publishers),
+                    "Adpublisher" => implode(', ',$publishers),
                     "Description" => "<a href='" . env('FRONTEND_URL') . "/login'>". "View Advertisments</a>",
                 ],
                 cc: 'rashu@techknowworld.com'

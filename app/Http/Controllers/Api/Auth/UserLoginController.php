@@ -101,16 +101,18 @@ class UserLoginController extends Controller
 
             Log::info('response from secure api ', $res);
 
-            $user = json_decode($res['user']);
-            $localUser = User::where('email', $user->email)
-                ->where('secure_api_id', $user->companyKey)
+            $user = json_decode($res['user'],true);
+            $localUser = User::where('email', $user['email'])
+                ->where('secure_api_id', $user['companyKey'])
                 ->first();
             $userRoles = explode(',', $user->roles);
 
             if (!$localUser) {
+
                 if(! in_array('AdNetworkCompanyAdmin', $userRoles)){
                     return $this->errorResponse('User is not a AdNetworkCompanyAdmin');
                 }
+                SecureApi::createExistingSecureApiUser($user->companySlug, );
                 $localUser = User::create([
                     'email' => $user->email,
                     'secure_api_id' => $user->companyKey
