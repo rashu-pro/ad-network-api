@@ -101,9 +101,9 @@ class UserLoginController extends Controller
 
             Log::info('response from secure api ', $res);
 
-            $user = json_decode($res['user'],true);
-            $localUser = User::where('email', $user['email'])
-                ->where('secure_api_id', $user['companyKey'])
+            $user = json_decode($res['user']);
+            $localUser = User::where('email', $user->email)
+                ->where('secure_api_id', $user->companyKey)
                 ->first();
             $userRoles = explode(',', $user->roles);
 
@@ -112,12 +112,19 @@ class UserLoginController extends Controller
                 if(! in_array('AdNetworkCompanyAdmin', $userRoles)){
                     return $this->errorResponse('User is not a AdNetworkCompanyAdmin');
                 }
-                SecureApi::createExistingSecureApiUser($user->companySlug, );
+//                SecureApi::createExistingSecureApiUser($user->companySlug, );
                 $localUser = User::create([
                     'email' => $user->email,
                     'secure_api_id' => $user->companyKey
                 ]);
 
+
+//                $publisherRole = app(Role::class)->findOrCreate(RolesEnum::PUBLISHER->value,'api');
+//                $localUser->assignRole($publisherRole);
+//
+//                $advertiserRole = app(Role::class)->findOrCreate(RolesEnum::ADVERTISER->value,'api');
+//                $localUser->assignRole($advertiserRole);
+//                event(new AdvertiserRegistered($localUser));
 
                 if($user->isAdPublisher == true){
                     $publisherRole = app(Role::class)->findOrCreate(RolesEnum::PUBLISHER->value,'api');

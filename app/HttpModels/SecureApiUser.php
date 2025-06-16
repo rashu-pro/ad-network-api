@@ -25,7 +25,7 @@ class SecureApiUser implements HttpModel
     {
         // Base validation rules
         $rules = [
-            'email' => 'required|email|max:255',
+            'email' => 'required',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'business_name' => 'required|string|max:255',
