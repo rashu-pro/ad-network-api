@@ -103,4 +103,47 @@ class SecureApiService
         throw new SecureApiException("Failed to fetch user", $response->status(),$response->body());
     }
 
+    /**
+     * Send a single email using the Secure API email template service.
+     *
+     * @param string $companyKey
+     * @param string $templateIdentifier
+     * @param string $recipient
+     * @param array $placeholders
+     * @param string|null $cc
+     * @return array
+     * @throws SecureApiException
+     */
+    public function sendSingleEmail(
+        string $companyKey,
+        string $templateIdentifier,
+        string $recipient,
+        array $placeholders,
+        ?string $cc = null
+    ): array {
+        $placeholders['Description'] = $placeholders['Description'] ?? ' ';
+
+        $payload = [
+            "CompanyKey" => $companyKey,
+            "EmailTemplateIdentifierName" => $templateIdentifier,
+            "Recipient" => $recipient,
+            "Placeholders" => $placeholders,
+        ];
+
+        if ($cc) {
+            $payload["Cc"] = $cc;
+        }
+
+        $response = Http::withHeaders([
+            'Accept' => 'application/json',
+        ])->post(env('SECURE_API_AUTHENTICATION_URL') . "/api/v1/email/send-template", $payload);
+
+        if ($response->ok()) {
+            return $response->json();
+        }
+
+        throw new SecureApiException("Failed to send email", $response->status(), $response->body());
+    }
+
+
 }

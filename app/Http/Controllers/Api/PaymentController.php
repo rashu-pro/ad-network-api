@@ -7,6 +7,7 @@ use App\Enums\PaymentStatus;
 use App\Enums\PublisherCampaignStatus;
 use App\Events\CampaignPublished;
 use App\Events\SendCampaignCodesToPublishers;
+use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CampaignPaymentResource;
 use App\Models\Campaign;
@@ -64,17 +65,39 @@ class PaymentController extends Controller
         ]);
         $campaign->refresh();
         $mappings = $campaign->campaignMappings()->get();
+        $publishers = [];
         if($campaign->payment_status == PaymentStatus::PAID){
             foreach($mappings as $mapping){
                 $mapping->update([
                     'status' => PublisherCampaignStatus::APPROVE->value,
                 ]);
                 $mapping->refresh();
+                if($mapping->publisher){
+                    $publisher = SecureApi::getUser($mapping->publisher->secure_api_id, $mapping->publisher->email);
+                    if($publisher){
+                        $publishers[] = $publisher['business_name'];
+                    }
+                }
             }
         }
 
         DB::commit();
 //        event(new CampaignPublished($campaign));
+        $secureApiUser = SecureApi::getUser($user->secure_api_id, $user->email);
+        SecureApi::sendSingleEmail(
+            companyKey: $user->secure_api_id,
+            templateIdentifier: "AD_NETWORK_ADVERTISEMENT_APPROVAL",
+            recipient: $user->email,
+            placeholders: [
+                "ContactPersonName" => $secureApiUser['contactInfo']['name'],
+                "CampaignTitle" => $campaign->campaign_name,
+                "StartDate" => $campaign->mappings ? date_format(date_create($campaign->mappings->first()->start_date),'d M, Y') : null,
+                "EndDate" => $campaign->mappings ? date_format(date_create($campaign->mappings->first()->end_date),'d M, Y') : null,
+                "Adpublisher" => implode(',',$publishers),
+                "Description" => "<a href='" . env('FRONTEND_URL') . "/login'>". "Login in to the portal</a>",
+            ],
+            cc: "rashu.web@gmail.com"
+        );
         return $this->successResponse('Payment successful');
     }
 
