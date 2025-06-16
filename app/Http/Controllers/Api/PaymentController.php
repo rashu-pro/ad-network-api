@@ -83,6 +83,8 @@ class PaymentController extends Controller
                             placeholders: [
                                 "ContactPersonName" => $publisher['contactInfo']['name'],
                                 "CampaignTitle" => $mapping->campaign->campaign_name,
+                                "StartDate" => date_format(date_create($mapping->start_date),"d M, Y"),
+                                "EndDate" => date_format(date_create($mapping->end_date),"d M, Y"),
                                 "Advertiser" => $advertiser['businessName'].'('.$advertiser['contactInfo']['email'].')' ?? '',
                                 "Description" => "<a href='" . env('FRONTEND_URL') . "/login'>View Advertisement". "</a>",
                             ],
