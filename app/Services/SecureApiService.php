@@ -115,12 +115,11 @@ class SecureApiService
      * @throws SecureApiException
      */
     public function sendSingleEmail(
-        string $companyKey,
         string $templateIdentifier,
         string $recipient,
         array $placeholders,
         ?string $cc = null
-    ): array {
+    ): mixed {
         $placeholders['Description'] = $placeholders['Description'] ?? ' ';
 
         $payload = [
