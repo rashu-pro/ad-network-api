@@ -124,19 +124,19 @@ class SecureApiService
         $placeholders['Description'] = $placeholders['Description'] ?? ' ';
 
         $payload = [
-            "CompanyKey" => $companyKey,
+            "CompanyKey" => "D6A763AD-659E-403C-BE52-0429CCCA6457",
             "EmailTemplateIdentifierName" => $templateIdentifier,
             "Recipient" => $recipient,
             "Placeholders" => $placeholders,
         ];
-
+        Log::info('payload', $payload);
         if ($cc) {
             $payload["Cc"] = $cc;
         }
 
         $response = Http::withHeaders([
             'Accept' => 'application/json',
-        ])->post(env('SECURE_API_AUTHENTICATION_URL') . "/api/v1/email/send-template", $payload);
+        ])->post(env('SECURE_API_AUTHENTICATION_URL') . "/api/v1/send-single-email", $payload);
 
         if ($response->ok()) {
             return $response->json();

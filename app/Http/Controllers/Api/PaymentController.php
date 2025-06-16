@@ -75,7 +75,7 @@ class PaymentController extends Controller
                 if($mapping->publisher){
                     $publisher = SecureApi::getUser($mapping->publisher->secure_api_id, $mapping->publisher->email);
                     if($publisher){
-                        $publishers[] = $publisher['business_name'];
+                        $publishers[] = $publisher['businessName'];
                     }
                 }
             }
