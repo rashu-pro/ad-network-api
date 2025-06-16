@@ -806,6 +806,30 @@ class PublisherOtpController extends Controller
 //                Log::info('mapping: ', $campaignMapping);
                 $mappings = $campaignMapping->campaign->mappings;
                 Log::info('valid mapping: ', $mappings->toArray());
+                if($campaignMapping->advertiser){
+                    $advertiser = SecureApi::getUser(
+                        $campaignMapping->advertiser->secure_api_id,
+                        $campaignMapping->advertiser->email
+                    );
+                    if($advertiser){
+                        $publisher = SecureApi::getUser(
+                            $campaignMapping->publisher->secure_api_id,
+                            $campaignMapping->publisher->email
+                        );
+                        SecureApi::sendSingleEmail(
+                            templateIdentifier: "AD_NETWORK_ADVERTISEMENT_REJECTION",
+                            recipient: $campaignMapping->advertise->email,
+                            placeholders: [
+                                "ContactPersonName" => $advertiser['contactInfo']['name'],
+                                "CampaignTitle" => $campaignMapping->campaign->campaign_name,
+                                "Adpublisher" => $publisher['businessName'],
+                                "RejectionReason" => $campaignMapping->notes,
+                                "Description" => "<a href='" . env('FRONTEND_URL') . "/login'>View Advertisement". "</a>",
+                            ]
+                        );
+                    }
+                }
+
                 if($hasCode){
                     event(new SendCampaignCodesToPublishers($mappings));
                 }
