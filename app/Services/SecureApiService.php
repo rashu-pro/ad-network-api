@@ -124,7 +124,7 @@ class SecureApiService
         $placeholders['Description'] = $placeholders['Description'] ?? ' ';
 
         $payload = [
-            "CompanyKey" => "D6A763AD-659E-403C-BE52-0429CCCA6457",
+            "CompanyKey" => env('EMAIL_TEMPLATE_COMPANY_KEY','D6A763AD-659E-403C-BE52-0429CCCA6457'),
             "EmailTemplateIdentifierName" => $templateIdentifier,
             "Recipient" => $recipient,
             "Placeholders" => $placeholders,
