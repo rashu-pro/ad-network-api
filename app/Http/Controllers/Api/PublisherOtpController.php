@@ -818,7 +818,7 @@ class PublisherOtpController extends Controller
                         );
                         SecureApi::sendSingleEmail(
                             templateIdentifier: "AD_NETWORK_ADVERTISEMENT_REJECTION",
-                            recipient: $campaignMapping->advertise->email,
+                            recipient: $campaignMapping->advertiser->email,
                             placeholders: [
                                 "ContactPersonName" => $advertiser['contactInfo']['name'],
                                 "CampaignTitle" => $campaignMapping->campaign->campaign_name,
