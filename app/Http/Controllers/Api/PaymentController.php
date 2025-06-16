@@ -75,7 +75,7 @@ class PaymentController extends Controller
                 if($mapping->publisher){
                     $publisher = SecureApi::getUser($mapping->publisher->secure_api_id, $mapping->publisher->email);
                     if($publisher){
-                        $publishers[] = $publisher['businessName'];
+                        $publishers[] = $publisher['businessName'].'-'.$mapping->publisherAsset->asset->name;
                         $advertiser = SecureApi::getUser($mapping->advertiser->secure_api_id, $mapping->advertiser->email);
                         SecureApi::sendSingleEmail(
                             templateIdentifier: "AD_NETWORK_ADVERTISEMENT_RECEIVED",
