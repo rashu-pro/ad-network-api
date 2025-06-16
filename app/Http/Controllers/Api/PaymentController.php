@@ -106,7 +106,7 @@ class PaymentController extends Controller
                 "CampaignTitle" => $campaign->campaign_name,
                 "StartDate" => $campaign->mappings ? date_format(date_create($campaign->mappings->first()->start_date),'d M, Y') : null,
                 "EndDate" => $campaign->mappings ? date_format(date_create($campaign->mappings->first()->end_date),'d M, Y') : null,
-                "Adpublisher" => implode(',',$publishers),
+                "Adpublisher" => implode(', ',$publishers),
                 "Description" => "<a href='" . env('FRONTEND_URL') . "/login'>". "Login in to the portal</a>",
             ],
             cc: "rashu@techknowworld.com"
