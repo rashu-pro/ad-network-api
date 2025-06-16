@@ -398,7 +398,8 @@ class PublisherOtpController extends Controller
         ]);
         $user = Auth::guard('api')->user();
         $asset = Asset::findOrFail($request->asset_id);
-        $data = $request->only(['asset_id','min_duration_in_hour','price_per_hour', 'url', 'zone_id']);
+        $data = $request->only(['asset_id','min_duration_in_hour', 'url', 'zone_id']);
+        $data['price_per_hour'] = $request->price_per_hour/24;
         $secureApiUser = SecureApi::getUser($user->secure_api_id,$user->email);
 //        $data['url'] = $request->url ? "{$request->url}?org_slug={$secureApiUser['companyKey']}": '';
         $url = rtrim($request->url, '/');
