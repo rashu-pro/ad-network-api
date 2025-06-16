@@ -100,7 +100,7 @@ class PublishCampaignToAdserver
                 }
             }
         }
-        if($campaign->advertiser){
+        if($campaign->advertiser && !empty($publishers)){
             $secureApiUser = SecureApi::getUser($campaign->advertiser->secure_api_id, $campaign->advertiser->email);
             SecureApi::sendSingleEmail(
                 templateIdentifier: "AD_NETWORK_ADVERTISEMENT_LIVE",
@@ -116,6 +116,5 @@ class PublishCampaignToAdserver
                 cc: 'rashu@techknowworld.com'
             );
         }
-
     }
 }
