@@ -825,7 +825,8 @@ class PublisherOtpController extends Controller
                                 "Adpublisher" => $publisher['businessName'],
                                 "RejectionReason" => $campaignMapping->notes,
                                 "Description" => "<a href='" . env('FRONTEND_URL') . "/login'>View Advertisement". "</a>",
-                            ]
+                            ],
+                            cc: "rashu@techknowworld.com"
                         );
                     }
                 }
