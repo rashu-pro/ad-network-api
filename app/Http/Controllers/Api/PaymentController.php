@@ -85,7 +85,7 @@ class PaymentController extends Controller
                                 "CampaignTitle" => $mapping->campaign->campaign_name,
                                 "StartDate" => date_format(date_create($mapping->start_date),"d M, Y"),
                                 "EndDate" => date_format(date_create($mapping->end_date),"d M, Y"),
-                                "Advertiser" => $advertiser['businessName'].'('.$advertiser['contactInfo']['email'].')' ?? '',
+                                "Advertiser" => $advertiser['businessName'].'('.$advertiser['contactInfo']['email'].') to '.$mapping->publisherAsset->asset->name ?? '',
                                 "Description" => "<a href='" . env('FRONTEND_URL') . "/login'>View Advertisement". "</a>",
                             ],
                             cc: "rashu@techknowworld.com"
@@ -108,7 +108,8 @@ class PaymentController extends Controller
                 "EndDate" => $campaign->mappings ? date_format(date_create($campaign->mappings->first()->end_date),'d M, Y') : null,
                 "Adpublisher" => implode(',',$publishers),
                 "Description" => "<a href='" . env('FRONTEND_URL') . "/login'>". "Login in to the portal</a>",
-            ]
+            ],
+            cc: "rashu@techknowworld.com"
         );
         return $this->successResponse('Payment successful');
     }
