@@ -5,6 +5,7 @@ namespace App\Listeners;
 use App\Enums\PublisherCampaignStatus;
 use App\Events\CampaignPublished;
 use App\Facades\AdServer;
+use App\Facades\SecureApi;
 use App\Models\CampaignMapping;
 use App\Models\Zone;
 use App\Services\AdServerService;
@@ -28,7 +29,7 @@ class PublishCampaignToAdserver
     {
         $campaign = $event->campaign;
         $campaignMappings = CampaignMapping::where('campaign_id', $campaign->id)->get();
-
+        $publishers = [];
         foreach ($campaignMappings as $campaignMapping) {
             if ($campaignMapping->is_active) {
                 continue;
@@ -91,7 +92,29 @@ class PublishCampaignToAdserver
                 if (!$campaignMapping->is_active) {
                     throw new HttpException(500, "Campaign already published!");
                 }
+                if($campaignMapping->publisher){
+                    $publisher = SecureApi::getUser($campaignMapping->publisher->secure_api_id, $campaignMapping->publisher->email);
+                    if($publisher){
+                        $publishers[] = $publisher['businessName'];
+                    }
+                }
             }
         }
+        if($campaign->advertiser){
+            $secureApiUser = SecureApi::getUser($campaign->advertiser->secure_api_id, $campaign->advertiser->email);
+            SecureApi::sendSingleEmail(
+                templateIdentifier: "AD_NETWORK_ADVERTISEMENT_LIVE",
+                recipient: $campaign->advertiser->email,
+                placeholders: [
+                    "ContactPersonName" => $secureApiUser['contactInfo']['name'],
+                    "CampaignTitle" => $campaign->campaign_name,
+                    "StartDate" => $campaign->mappings ? date_format(date_create($campaign->mappings->first()->start_date),'d M, Y') : null,
+                    "EndDate" => $campaign->mappings ? date_format(date_create($campaign->mappings->first()->end_date),'d M, Y') : null,
+                    "Adpublisher" => implode(',',$publishers),
+                    "Description" => "<a href='" . env('FRONTEND_URL') . "/login'>". "Login in to the portal</a>",
+                ]
+            );
+        }
+
     }
 }

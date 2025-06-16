@@ -85,7 +85,6 @@ class PaymentController extends Controller
 //        event(new CampaignPublished($campaign));
         $secureApiUser = SecureApi::getUser($user->secure_api_id, $user->email);
         SecureApi::sendSingleEmail(
-            companyKey: $user->secure_api_id,
             templateIdentifier: "AD_NETWORK_ADVERTISEMENT_APPROVAL",
             recipient: $user->email,
             placeholders: [
@@ -95,8 +94,7 @@ class PaymentController extends Controller
                 "EndDate" => $campaign->mappings ? date_format(date_create($campaign->mappings->first()->end_date),'d M, Y') : null,
                 "Adpublisher" => implode(',',$publishers),
                 "Description" => "<a href='" . env('FRONTEND_URL') . "/login'>". "Login in to the portal</a>",
-            ],
-            cc: "rashu.web@gmail.com"
+            ]
         );
         return $this->successResponse('Payment successful');
     }
