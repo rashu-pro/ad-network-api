@@ -76,6 +76,18 @@ class PaymentController extends Controller
                     $publisher = SecureApi::getUser($mapping->publisher->secure_api_id, $mapping->publisher->email);
                     if($publisher){
                         $publishers[] = $publisher['businessName'];
+                        $advertiser = SecureApi::getUser($mapping->advertiser->secure_api_id, $mapping->advertiser->email);
+                        SecureApi::sendSingleEmail(
+                            templateIdentifier: "AD_NETWORK_ADVERTISEMENT_RECEIVED",
+                            recipient: $mapping->publisher->email,
+                            placeholders: [
+                                "ContactPersonName" => $publisher['contactInfo']['name'],
+                                "CampaignTitle" => $mapping->campaign->campaign_name,
+                                "Advertiser" => $advertiser['businessName'].'('.$advertiser['contactInfo']['email'].')' ?? '',
+                                "Description" => "<a href='" . env('FRONTEND_URL') . "/login'>View Advertisement". "</a>",
+                            ],
+                            cc: "rashu@techknowworld.com"
+                        );
                     }
                 }
             }
