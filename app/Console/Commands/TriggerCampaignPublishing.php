@@ -19,7 +19,7 @@ class TriggerCampaignPublishing extends Command
         // Step 1: Get today's mappings
         $mappings = CampaignMapping::with('campaign')
             ->whereDate('start_date', $today)
-            ->where('status', PublisherCampaignStatus::APPROVE)
+            ->where('status', PublisherCampaignStatus::APPROVE->value)
             ->where('is_active', false)
             ->get();
 
