@@ -395,13 +395,17 @@ class PublisherOtpController extends Controller
             'min_duration_in_hour' => 'required|numeric',
             'price_per_hour' => 'required|numeric',
             'url' => 'nullable|string',
+        ],[
+            'asset_id.required' => 'Asset reference is required.',
+            'zone_id.required' => 'Zone is required.',
+            'price_per_hour.required' => 'Rate of the asset is required.',
+            'url.required' => 'Url of the asset is required.'
         ]);
         $user = Auth::guard('api')->user();
         $asset = Asset::findOrFail($request->asset_id);
         $data = $request->only(['asset_id','min_duration_in_hour', 'url', 'zone_id']);
         $data['price_per_hour'] = $request->price_per_hour/24;
         $secureApiUser = SecureApi::getUser($user->secure_api_id,$user->email);
-//        $data['url'] = $request->url ? "{$request->url}?org_slug={$secureApiUser['companyKey']}": '';
         $url = rtrim($request->url, '/');
         $data['webhook_path'] = $url ? "{$url}/wp-json/adserver/v1/zone-scripts/web": '';
         if($asset->slug != 'website' && $asset->type == 'online'){
@@ -422,9 +426,6 @@ class PublisherOtpController extends Controller
                 return $this->errorResponse('Duration is not acceptable for the mentioned population');
             }
         }
-
-
-//        $securePublisher = SecureApi::getUser($user->secure_api_id);
 
         // Payload data
         $payload = [
