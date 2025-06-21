@@ -105,6 +105,7 @@ Route::prefix('publisher')->middleware('auth:api')->group(function (){
     Route::post('/update-campaign-mapping-status/{campaignMapping}',[\App\Http\Controllers\Api\PublisherOtpController::class,'updateCampaignMappingStatus']);
     Route::get('/assets',[\App\Http\Controllers\Api\PublisherOtpController::class,'assets'])->middleware('role:ad_publisher,api');
     Route::get('/asset/{id}', [\App\Http\Controllers\Api\PublisherOtpController::class, 'showAsset'])->middleware('role:ad_publisher,api');
+    Route::delete('/asset/{id}', [\App\Http\Controllers\Api\PublisherOtpController::class, 'deleteAsset'])->middleware('permission:delete asset,api');
     Route::get('/all-assets', [AssetController::class, 'allAssets'])->middleware('role:ad_publisher,api');
     Route::get('/zones/{assetId}', [ZoneController::class, 'zonesByAssetId'])->middleware('role:ad_publisher,api');
     Route::get('/campaigns',[\App\Http\Controllers\Api\PublisherOtpController::class,'allCampaigns'])->middleware('role:ad_publisher,api');

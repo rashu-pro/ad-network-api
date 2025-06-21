@@ -159,6 +159,41 @@ class PublisherOtpController extends Controller
         return $this->successResponse('Publisher asset details', new PublisherAssetResource($asset));
     }
 
+    /**
+     * Deletes an asset by id
+     * @param $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteAsset($id)
+    {
+        $user = Auth::guard('api')->user();
+
+        // Find the asset that belongs to the authenticated user
+        $publisherAsset = $user->assets()->find($id);
+
+        if (!$publisherAsset) {
+            return $this->errorResponse('Asset not found or does not belong to you.', 404);
+        }
+
+        // Check if the asset is linked to any active campaign
+        $hasActiveCampaign = $publisherAsset->campaigns()
+            ->where('status', 'active') // Adjust field name/value based on your schema
+            ->exists();
+
+        if ($hasActiveCampaign) {
+            return $this->errorResponse(
+                'This asset is currently in use by an active campaign and cannot be deleted.',
+                422
+            );
+        }
+
+        // Perform the delete (soft delete if your model uses SoftDeletes)
+        $publisherAsset->delete();
+
+        return $this->successResponse('Asset deleted successfully.');
+    }
+
+
     #[OA\Get(
         path: "/api/publishers/available-zones/{asset_id}",
         summary: "Get available zones for a given asset",
