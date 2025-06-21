@@ -39,6 +39,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Ramsey\Uuid\Type\Integer;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use function Laravel\Prompts\error;
 use function Symfony\Component\String\s;
@@ -397,9 +398,23 @@ class PublisherOtpController extends Controller
             'url' => 'nullable|string',
         ],[
             'asset_id.required' => 'Asset reference is required.',
+            'asset_id.integer' => 'Asset reference must be an integer.',
+            'asset_id.exists' => 'The selected asset does not exist.',
+
             'zone_id.required' => 'Zone is required.',
-            'price_per_hour.required' => 'Rate of the asset is required.',
-            'url.required' => 'Url of the asset is required.'
+            'zone_id.integer' => 'Zone ID must be an integer.',
+            'zone_id.exists' => 'The selected zone does not exist.',
+
+            'min_population.integer' => 'Minimum population must be an integer.',
+            'max_population.integer' => 'Maximum population must be an integer.',
+
+            'min_duration_in_hour.required' => 'Minimum duration (in hours) is required.',
+            'min_duration_in_hour.numeric' => 'Minimum duration must be a number.',
+
+            'price_per_hour.required' => 'Asset rate is required.',
+            'price_per_hour.numeric' => 'Asset rate must be a number.',
+
+            'url.string' => 'URL must be a string.',
         ]);
         $user = Auth::guard('api')->user();
         $asset = Asset::findOrFail($request->asset_id);
@@ -445,6 +460,82 @@ class PublisherOtpController extends Controller
         $publisherAsset = $user->assets()->create($data);
         return $this->successResponse(message: "Asset added to the publisher",data: new PublisherAssetResource($publisherAsset));
     }
+
+    /**
+     * Updates an asset
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateAsset(Request $request, int $id)
+    {
+        $request->validate([
+            'asset_id' => 'required|integer|exists:assets,id',
+            'zone_id' => 'required|integer|exists:zones,id',
+            'min_population' => 'nullable|integer',
+            'max_population' => 'nullable|integer',
+            'min_duration_in_hour' => 'required|numeric',
+            'price_per_hour' => 'required|numeric',
+            'url' => 'nullable|string',
+        ], [
+            'asset_id.required' => 'Asset reference is required.',
+            'asset_id.integer' => 'Asset reference must be an integer.',
+            'asset_id.exists' => 'The selected asset does not exist.',
+
+            'zone_id.required' => 'Zone is required.',
+            'zone_id.integer' => 'Zone ID must be an integer.',
+            'zone_id.exists' => 'The selected zone does not exist.',
+
+            'min_population.integer' => 'Minimum population must be an integer.',
+            'max_population.integer' => 'Maximum population must be an integer.',
+
+            'min_duration_in_hour.required' => 'Minimum duration (in hours) is required.',
+            'min_duration_in_hour.numeric' => 'Minimum duration must be a number.',
+
+            'price_per_hour.required' => 'Asset rate is required.',
+            'price_per_hour.numeric' => 'Asset rate must be a number.',
+
+            'url.string' => 'URL must be a string.',
+        ]);
+
+        $user = Auth::guard('api')->user();
+
+        $publisherAsset = $user->assets()->find($id);
+        if (!$publisherAsset) {
+            return $this->errorResponse(message: 'The requested asset is either missing or not accessible.', status: 404);
+        }
+        $asset = Asset::findOrFail($request->asset_id);
+        $data = $request->only(['asset_id', 'min_duration_in_hour', 'url', 'zone_id']);
+        $data['price_per_hour'] = $request->price_per_hour / 24;
+
+        $secureApiUser = SecureApi::getUser($user->secure_api_id, $user->email);
+        $url = rtrim($request->url, '/');
+        $data['webhook_path'] = $url ? "{$url}/wp-json/adserver/v1/zone-scripts/web" : '';
+
+        if ($asset->slug != 'website' && $asset->type == 'online') {
+            $domain = $this->getDomainOnly($request->url);
+            $data['webhook_path'] = $domain ? "{$domain}/wp-json/adserver/v1/{$secureApiUser['secure_api_id']}/zone-scripts/{$asset->slug}" : '';
+        }
+
+        if ($asset->type == 'online' && (!$request->has('url') || $request->get('url') == null)) {
+            return $this->errorResponse(message: 'URL is required for online asset', status: 422);
+        }
+
+        $validator = $this->asrv->validateAsset($request->asset_id, $request->min_population, $request->max_population ?? null);
+        if ($validator) {
+            if ($validator->max_price_per_hour < $request->price_per_hour) {
+                return $this->errorResponse(message: 'Price is not acceptable for the mentioned population', status: 422);
+            }
+            if ($validator->min_duration_in_hour > $request->min_duration_in_hour) {
+                return $this->errorResponse(message: 'Duration is not acceptable for the mentioned population', status: 422);
+            }
+        }
+
+        // Update asset
+        $publisherAsset->update($data);
+        return $this->successResponse(message: "Asset updated successfully", data: new PublisherAssetResource($publisherAsset));
+    }
+
 
     function getDomainOnly($url) {     $parsedUrl = parse_url($url);     return isset($parsedUrl['scheme'], $parsedUrl['host'])         ? "{$parsedUrl['scheme']}://{$parsedUrl['host']}" : null; }
 
