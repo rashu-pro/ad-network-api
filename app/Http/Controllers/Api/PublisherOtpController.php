@@ -143,6 +143,22 @@ class PublisherOtpController extends Controller
         return $this->successResponse('Publisher assets',PublisherAssetResource::collection($user->assets()->latest()->get()));
     }
 
+    /**
+     * show publisher asset by id
+     * @param $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function showAsset($id)
+    {
+        $user = Auth::guard('api')->user();
+        // Find the asset that belongs to the authenticated user
+        $asset = $user->assets()->find($id);
+        if (!$asset) {
+            return $this->errorResponse(message: 'Asset not found or does not belong to you.', status: 404);
+        }
+        return $this->successResponse('Publisher asset details', new PublisherAssetResource($asset));
+    }
+
     #[OA\Get(
         path: "/api/publishers/available-zones/{asset_id}",
         summary: "Get available zones for a given asset",
