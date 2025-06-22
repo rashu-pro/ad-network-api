@@ -170,20 +170,21 @@ class PublisherOtpController extends Controller
 
         // Find the asset that belongs to the authenticated user
         $publisherAsset = $user->assets()->find($id);
-
         if (!$publisherAsset) {
-            return $this->errorResponse('Asset not found or does not belong to you.', 404);
+            return $this->errorResponse(message: 'Asset not found or does not belong to you.', status: 404);
         }
 
         // Check if the asset is linked to any active campaign
-        $hasActiveCampaign = $publisherAsset->campaigns()
-            ->where('status', 'active') // Adjust field name/value based on your schema
+        $hasActiveCampaignMappings = CampaignMapping::where('publisher_id',$user->id)
+            ->where('publisher_asset_id', $publisherAsset->id)
+            ->where('status', PublisherCampaignStatus::APPROVE->value)
+            ->where('is_active', true)
             ->exists();
 
-        if ($hasActiveCampaign) {
+        if ($hasActiveCampaignMappings) {
             return $this->errorResponse(
-                'This asset is currently in use by an active campaign and cannot be deleted.',
-                422
+                message: 'This asset is currently in use by active campaigns and cannot be deleted.',
+                status: 422
             );
         }
 
@@ -193,6 +194,20 @@ class PublisherOtpController extends Controller
         return $this->successResponse('Asset deleted successfully.');
     }
 
+    public function getActiveMappingByAsset(int $id){
+        $user = Auth::guard('api')->user();
+        // Find the asset that belongs to the authenticated user
+        $publisherAsset = $user->assets()->find($id);
+        if(!$publisherAsset){
+            return $this->errorResponse(message: 'No asset has been found.', status: 404);
+        }
+        $mappings = CampaignMapping::where('publisher_id',$user->id)
+            ->where('publisher_asset_id', $publisherAsset->id)
+            ->where('status', PublisherCampaignStatus::APPROVE->value)
+            ->where('is_active', true)
+            ->get();
+        return $this->successResponse('Active mapping on the asset', $mappings->toArray());
+    }
 
     #[OA\Get(
         path: "/api/publishers/available-zones/{asset_id}",
