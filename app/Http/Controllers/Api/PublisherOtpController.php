@@ -164,51 +164,69 @@ class PublisherOtpController extends Controller
      * @param $id
      * @return \Illuminate\Http\JsonResponse
      */
-    /**
-     * @OA\Delete(
-     *     path="/api/publisher/asset/{id}",
-     *     summary="Delete a publisher asset",
-     *     description="Deletes an asset belonging to the authenticated publisher, provided it is not linked to any active campaigns.",
-     *     operationId="deletePublisherAsset",
-     *     tags={"Publisher Assets"},
-     *     security={{"bearerAuth":{}}},
-     *
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="ID of the asset to delete",
-     *         required=true,
-     *         @OA\Schema(type="integer", format="int64")
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=200,
-     *         description="Asset deleted successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", type="string", example="Asset deleted successfully.")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=404,
-     *         description="Asset not found or does not belong to you",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Asset not found or does not belong to you.")
-     *         )
-     *     ),
-     *
-     *     @OA\Response(
-     *         response=422,
-     *         description="Asset is currently in use by active campaigns",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="This asset is currently in use by active campaigns and cannot be deleted.")
-     *         )
-     *     )
-     * )
-     */
+    #[OA\Delete(
+        path: "/api/publisher/asset/{id}",
+        summary: "Delete a publisher's asset",
+        security: [
+            ["bearerAuth" => []] // Protected route requiring Publisher's Bearer token
+        ],
+        tags: ["Publisher"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                description: "ID of the publisher asset to delete",
+                in: "path",
+                required: true,
+                schema: new OA\Schema(type: "integer", example: 8)
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Asset deleted successfully",
+                content: new OA\JsonContent(
+                    type: "object",
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: true),
+                        new OA\Property(property: "message", type: "string", example: "Asset deleted successfully")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: "Asset not found or does not belong to the user",
+                content: new OA\JsonContent(
+                    type: "object",
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "Asset not found or does not belong to you.")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 422,
+                description: "Asset is linked to active campaigns and cannot be deleted",
+                content: new OA\JsonContent(
+                    type: "object",
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "This asset is currently in use by active campaigns and cannot be deleted.")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 500,
+                description: "Internal Server Error",
+                content: new OA\JsonContent(
+                    type: "object",
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "An unexpected error occurred")
+                    ]
+                )
+            )
+        ]
+    )]
     public function deleteAsset($id)
     {
         $user = Auth::guard('api')->user();
@@ -578,6 +596,82 @@ class PublisherOtpController extends Controller
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
      */
+    #[OA\Put(
+        path: "/api/publisher/asset/update/{id}",
+        summary: "Update a publisher's asset",
+        description: "Allows an authenticated publisher to update one of their assets with validated details.",
+        security: [
+            ["bearerAuth" => []] // Protected route with permission: update asset
+        ],
+        tags: ["Publisher"],
+        parameters: [
+            new OA\Parameter(
+                name: "id",
+                in: "path",
+                required: true,
+                description: "ID of the publisher's asset to update",
+                schema: new OA\Schema(type: "integer", example: 10)
+            )
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ["asset_id", "zone_id", "min_duration_in_hour", "price_per_hour"],
+                properties: [
+                    new OA\Property(property: "asset_id", type: "integer", example: 3, description: "Asset ID reference"),
+                    new OA\Property(property: "zone_id", type: "integer", example: 2, description: "Zone ID to assign the asset to"),
+                    new OA\Property(property: "min_population", type: "integer", example: 1000, nullable: true),
+                    new OA\Property(property: "max_population", type: "integer", example: 5000, nullable: true),
+                    new OA\Property(property: "min_duration_in_hour", type: "number", format: "float", example: 12.0),
+                    new OA\Property(property: "price_per_hour", type: "number", format: "float", example: 48.00),
+                    new OA\Property(property: "url", type: "string", format: "url", example: "https://example.com", nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: "Asset updated successfully",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: true),
+                        new OA\Property(property: "message", type: "string", example: "Asset updated successfully"),
+                        new OA\Property(property: "data", type: "object", description: "Updated asset details")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 404,
+                description: "Asset not found or unauthorized access",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "The requested asset is either missing or not accessible.")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 422,
+                description: "Invalid or unacceptable data provided",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "Duration is not acceptable for the mentioned population")
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 500,
+                description: "Internal Server Error",
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: "success", type: "boolean", example: false),
+                        new OA\Property(property: "message", type: "string", example: "An unexpected error occurred")
+                    ]
+                )
+            )
+        ]
+    )]
     public function updateAsset(Request $request, int $id)
     {
         $request->validate([
@@ -646,7 +740,6 @@ class PublisherOtpController extends Controller
         $publisherAsset->update($data);
         return $this->successResponse(message: "Asset updated successfully", data: new PublisherAssetResource($publisherAsset));
     }
-
 
     function getDomainOnly($url) {     $parsedUrl = parse_url($url);     return isset($parsedUrl['scheme'], $parsedUrl['host'])         ? "{$parsedUrl['scheme']}://{$parsedUrl['host']}" : null; }
 

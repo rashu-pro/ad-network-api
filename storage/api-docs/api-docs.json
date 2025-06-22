@@ -1970,20 +1970,20 @@
         "/api/publisher/asset/{id}": {
             "delete": {
                 "tags": [
-                    "Publisher Assets"
+                    "Publisher"
                 ],
-                "summary": "Delete a publisher asset",
-                "description": "Deletes an asset belonging to the authenticated publisher, provided it is not linked to any active campaigns.",
-                "operationId": "deletePublisherAsset",
+                "summary": "Delete a publisher's asset",
+                "description": "Deletes an asset by id",
+                "operationId": "56d6d68397275904933696dc7b2ffd0f",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID of the asset to delete",
+                        "description": "ID of the publisher asset to delete",
                         "required": true,
                         "schema": {
                             "type": "integer",
-                            "format": "int64"
+                            "example": 8
                         }
                     }
                 ],
@@ -1998,9 +1998,9 @@
                                             "type": "boolean",
                                             "example": true
                                         },
-                                        "data": {
+                                        "message": {
                                             "type": "string",
-                                            "example": "Asset deleted successfully."
+                                            "example": "Asset deleted successfully"
                                         }
                                     },
                                     "type": "object"
@@ -2009,7 +2009,7 @@
                         }
                     },
                     "404": {
-                        "description": "Asset not found or does not belong to you",
+                        "description": "Asset not found or does not belong to the user",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2029,7 +2029,7 @@
                         }
                     },
                     "422": {
-                        "description": "Asset is currently in use by active campaigns",
+                        "description": "Asset is linked to active campaigns and cannot be deleted",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2041,6 +2041,26 @@
                                         "message": {
                                             "type": "string",
                                             "example": "This asset is currently in use by active campaigns and cannot be deleted."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "An unexpected error occurred"
                                         }
                                     },
                                     "type": "object"
@@ -2390,6 +2410,173 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Asset validation not found or URL is required"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "An unexpected error occurred"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/publisher/asset/update/{id}": {
+            "put": {
+                "tags": [
+                    "Publisher"
+                ],
+                "summary": "Update a publisher's asset",
+                "description": "Allows an authenticated publisher to update one of their assets with validated details.",
+                "operationId": "fddb54988ffe3a8998c4fd83b5458c9e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID of the publisher's asset to update",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "asset_id",
+                                    "zone_id",
+                                    "min_duration_in_hour",
+                                    "price_per_hour"
+                                ],
+                                "properties": {
+                                    "asset_id": {
+                                        "description": "Asset ID reference",
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "zone_id": {
+                                        "description": "Zone ID to assign the asset to",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "min_population": {
+                                        "type": "integer",
+                                        "example": 1000,
+                                        "nullable": true
+                                    },
+                                    "max_population": {
+                                        "type": "integer",
+                                        "example": 5000,
+                                        "nullable": true
+                                    },
+                                    "min_duration_in_hour": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 12
+                                    },
+                                    "price_per_hour": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 48
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "format": "url",
+                                        "example": "https://example.com",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Asset updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Asset updated successfully"
+                                        },
+                                        "data": {
+                                            "description": "Updated asset details",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Asset not found or unauthorized access",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The requested asset is either missing or not accessible."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid or unacceptable data provided",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Duration is not acceptable for the mentioned population"
                                         }
                                     },
                                     "type": "object"
@@ -2798,10 +2985,6 @@
         {
             "name": "Publisher",
             "description": "Publisher"
-        },
-        {
-            "name": "Publisher Assets",
-            "description": "Publisher Assets"
         }
     ],
     "security": {
