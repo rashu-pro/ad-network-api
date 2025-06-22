@@ -164,6 +164,51 @@ class PublisherOtpController extends Controller
      * @param $id
      * @return \Illuminate\Http\JsonResponse
      */
+    /**
+     * @OA\Delete(
+     *     path="/api/publisher/asset/{id}",
+     *     summary="Delete a publisher asset",
+     *     description="Deletes an asset belonging to the authenticated publisher, provided it is not linked to any active campaigns.",
+     *     operationId="deletePublisherAsset",
+     *     tags={"Publisher Assets"},
+     *     security={{"bearerAuth":{}}},
+     *
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID of the asset to delete",
+     *         required=true,
+     *         @OA\Schema(type="integer", format="int64")
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Asset deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="string", example="Asset deleted successfully.")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=404,
+     *         description="Asset not found or does not belong to you",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Asset not found or does not belong to you.")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Asset is currently in use by active campaigns",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="This asset is currently in use by active campaigns and cannot be deleted.")
+     *         )
+     *     )
+     * )
+     */
     public function deleteAsset($id)
     {
         $user = Auth::guard('api')->user();

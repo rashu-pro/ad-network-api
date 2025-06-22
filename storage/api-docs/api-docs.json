@@ -1276,6 +1276,94 @@
                 ]
             }
         },
+        "/api/advertiser/delete-campaign/{id}": {
+            "delete": {
+                "tags": [
+                    "Advertiser"
+                ],
+                "summary": "Delete a campaign",
+                "operationId": "d1d3938e0e41ffdb0965b6fe095eda03",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID of the campaign to delete",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Campaign deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Campaign deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Campaign not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Campaign not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "An unexpected error occurred"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/login": {
             "post": {
                 "tags": [
@@ -1516,7 +1604,7 @@
                     "**Authentication::Advertiser**"
                 ],
                 "summary": "Advertiser login",
-                "operationId": "a3b02f5b375eb6894a2fd0547d6809de",
+                "operationId": "a7a4d2bc41193ffc51b2d0be825aebf1",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -1641,7 +1729,7 @@
                     "**Authentication::Advertiser**"
                 ],
                 "summary": "Advertiser access token with refresh token",
-                "operationId": "608767f64782a0c491d724d1877859b0",
+                "operationId": "e6d842f209b78c8775c497dfe2b74288",
                 "responses": {
                     "200": {
                         "description": "Access token generated successfully",
@@ -1742,435 +1830,6 @@
                         "sanctum": []
                     }
                 ]
-            }
-        },
-        "/api/publisher/login": {
-            "post": {
-                "tags": [
-                    "**Authentication::Publisher**"
-                ],
-                "summary": "Publisher login",
-                "operationId": "6771a481df60f590901fda846b8e99e0",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/x-www-form-urlencoded": {
-                            "schema": {
-                                "required": [
-                                    "email",
-                                    "password"
-                                ],
-                                "properties": {
-                                    "email": {
-                                        "description": "User email",
-                                        "type": "string"
-                                    },
-                                    "password": {
-                                        "description": "User password",
-                                        "type": "string"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Login successful",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Logged in successfully."
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "access_token": {
-                                                    "type": "string"
-                                                },
-                                                "access_token_expires_at": {
-                                                    "type": "string",
-                                                    "format": "date-time"
-                                                },
-                                                "refresh_token": {
-                                                    "type": "string"
-                                                },
-                                                "refresh_token_expires_at": {
-                                                    "type": "string",
-                                                    "format": "date-time"
-                                                },
-                                                "token_type": {
-                                                    "type": "string",
-                                                    "example": "Bearer"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Validation Error"
-                                        },
-                                        "errors": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Server Error"
-                                        },
-                                        "errors": {
-                                            "type": "object",
-                                            "nullable": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/publisher/get-access-token": {
-            "post": {
-                "tags": [
-                    "**Authentication::Publisher**"
-                ],
-                "summary": "Advertiser access token with refresh token",
-                "operationId": "1a68e89e490d19c94b76ba985775f3c5",
-                "responses": {
-                    "200": {
-                        "description": "Access token generated successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Access token generated successfully."
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "access_token": {
-                                                    "type": "string"
-                                                },
-                                                "access_token_expires_at": {
-                                                    "type": "string",
-                                                    "format": "date-time"
-                                                },
-                                                "refresh_token": {
-                                                    "type": "string"
-                                                },
-                                                "refresh_token_expires_at": {
-                                                    "type": "string",
-                                                    "format": "date-time"
-                                                },
-                                                "token_type": {
-                                                    "type": "string",
-                                                    "example": "Bearer"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Validation Error"
-                                        },
-                                        "errors": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Server Error"
-                                        },
-                                        "errors": {
-                                            "type": "object",
-                                            "nullable": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    },
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/publishers/register": {
-            "post": {
-                "tags": [
-                    "Publisher"
-                ],
-                "summary": "Register a new publisher",
-                "description": "Register a publisher",
-                "operationId": "078a35fb4ac0698dc0fc96e1eb32b5fd",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "name",
-                                    "email",
-                                    "website_url"
-                                ],
-                                "properties": {
-                                    "guid": {
-                                        "description": "GUID of the publisher",
-                                        "type": "string",
-                                        "example": "123e4567-e89b-12d3-a456-426614174000",
-                                        "nullable": true
-                                    },
-                                    "name": {
-                                        "description": "Name of the publisher",
-                                        "type": "string",
-                                        "example": "John Doe"
-                                    },
-                                    "email": {
-                                        "description": "Email address of the publisher",
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "john.doe@example.com"
-                                    },
-                                    "company_name": {
-                                        "description": "Company name of the publisher",
-                                        "type": "string",
-                                        "example": "Tech Solutions Ltd.",
-                                        "nullable": true
-                                    },
-                                    "company_address": {
-                                        "description": "Address of the company",
-                                        "type": "string",
-                                        "example": "123 Business St., Springfield",
-                                        "nullable": true
-                                    },
-                                    "website_url": {
-                                        "description": "Website URL of the publisher",
-                                        "type": "string",
-                                        "format": "url",
-                                        "example": "https://www.techsolutions.com"
-                                    },
-                                    "latitude": {
-                                        "description": "Latitude of the publisher's location",
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 40.712776,
-                                        "nullable": true
-                                    },
-                                    "longitude": {
-                                        "description": "Longitude of the publisher's location",
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": -74.005974,
-                                        "nullable": true
-                                    },
-                                    "logo_url": {
-                                        "description": "URL of the publisher's logo",
-                                        "type": "string",
-                                        "format": "url",
-                                        "example": "https://www.techsolutions.com/logo.png",
-                                        "nullable": true
-                                    },
-                                    "package_id": {
-                                        "description": "Package ID assigned to the publisher",
-                                        "type": "integer",
-                                        "example": 1,
-                                        "nullable": true
-                                    },
-                                    "publisher_id": {
-                                        "description": "ID of the parent publisher (if any)",
-                                        "type": "integer",
-                                        "example": 10,
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Publisher registered successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Publisher registered successfully."
-                                        },
-                                        "data": {
-                                            "description": "Publisher details",
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "name": {
-                                                    "type": "string",
-                                                    "example": "John Doe"
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "john.doe@example.com"
-                                                },
-                                                "company_name": {
-                                                    "type": "string",
-                                                    "example": "Tech Solutions Ltd."
-                                                },
-                                                "website_url": {
-                                                    "type": "string",
-                                                    "example": "https://www.techsolutions.com"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Validation Error"
-                                        },
-                                        "errors": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Failed to register publisher"
-                                        },
-                                        "errors": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            },
-                                            "example": [
-                                                "An unexpected error occurred"
-                                            ]
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
             }
         },
         "/api/publisher/assets": {
@@ -2293,6 +1952,95 @@
                                         "message": {
                                             "type": "string",
                                             "example": "An unexpected error occurred"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/publisher/asset/{id}": {
+            "delete": {
+                "tags": [
+                    "Publisher Assets"
+                ],
+                "summary": "Delete a publisher asset",
+                "description": "Deletes an asset belonging to the authenticated publisher, provided it is not linked to any active campaigns.",
+                "operationId": "deletePublisherAsset",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID of the asset to delete",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Asset deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "string",
+                                            "example": "Asset deleted successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Asset not found or does not belong to you",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Asset not found or does not belong to you."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Asset is currently in use by active campaigns",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "This asset is currently in use by active campaigns and cannot be deleted."
                                         }
                                     },
                                     "type": "object"
@@ -3048,12 +2796,12 @@
             "description": "**Authentication::Advertiser**"
         },
         {
-            "name": "**Authentication::Publisher**",
-            "description": "**Authentication::Publisher**"
-        },
-        {
             "name": "Publisher",
             "description": "Publisher"
+        },
+        {
+            "name": "Publisher Assets",
+            "description": "Publisher Assets"
         }
     ],
     "security": {
