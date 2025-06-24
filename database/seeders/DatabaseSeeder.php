@@ -22,5 +22,7 @@ class DatabaseSeeder extends Seeder
 //        ]);
         $this->call(AssetDataSeeder::class);
         $this->call(RolesPermissionsSeeder::class);
+        $this->call(AssetTypeSeeder::class);
+        $this->call(AssetCategorySeeder::class);
     }
 }

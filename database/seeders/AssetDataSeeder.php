@@ -16,19 +16,16 @@ class AssetDataSeeder extends Seeder
             [
                 'name' => 'Website',
                 'slug' => 'website',
-                'type' => 'online',
                 'is_active' => true,
             ],
             [
                 'name' => 'Mobile',
                 'slug' => 'mobile',
-                'type' => 'online',
                 'is_active' => true,
             ],
             [
                 'name' => 'Digital Display',
                 'slug' => 'digital-display',
-                'type' => 'online',
                 'is_active' => true,
             ],
         ];
