@@ -34,7 +34,7 @@ use Illuminate\Validation\ValidationException;
             'publisher_asset_id' => 'required|integer',
             'start_date' => 'required|date',
             'end_date' => 'required|date',
-            'publisher_zone_id' => 'required|integer|exists:publisher_assets,zone_id'
+//            'publisher_zone_id' => 'required|integer|exists:publisher_assets,zone_id'
         ]);
 
         if ($validator->fails()) {
