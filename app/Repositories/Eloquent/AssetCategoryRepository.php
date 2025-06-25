@@ -16,6 +16,7 @@ class AssetCategoryRepository extends BaseRepository implements AssetCategoryRep
     public function getAllActiveAssetCategoriesByAssetTypeId(int $assetTypeId): Collection
     {
         return $this->model
+            ->with('assetType')
             ->where('status', true)
             ->where('asset_type_id', $assetTypeId)
             ->orderBy('name')

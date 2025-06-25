@@ -18,7 +18,9 @@ class AssetCategoryResource extends JsonResource
             'id'          => $this->id,
             'name'        => $this->name,
             'description' => $this->description,
-            'status'      => $this->status
+            'status'      => $this->status,
+
+            'asset_type' => new AssetTypeResource($this->whenLoaded('assetType')),
         ];
     }
 }
