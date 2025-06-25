@@ -6,6 +6,8 @@ use App\Enums\RolesEnum;
 use App\Enums\TokenAbility;
 use App\Events\CampaignPublished;
 use App\Http\Controllers\Api\AccountController;
+use App\Http\Controllers\Api\Admin\AssetCategoryController;
+use App\Http\Controllers\Api\Admin\AssetTypeController;
 use App\Http\Controllers\Api\AdRatingController;
 use App\Http\Controllers\Api\Auth\AdminLoginController;
 use App\Models\Asset;
@@ -46,6 +48,10 @@ Route::prefix('admin')->group(function () {
     Route::post('/assets/add', [AssetController::class, 'createAsset'])
         ->middleware('auth:admin');
     Route::post('/assets/delete/{id}', [AssetController::class, 'deleteAsset'])
+        ->middleware('auth:admin');
+    Route::get('/asset-types', [AssetTypeController::class, 'getAllActiveAssetTypes'])
+        ->middleware('auth:admin');
+    Route::post('/asset-categories/{assetTypeId}', [AssetCategoryController::class, 'getAllActiveAssetCategoriesByAssetTypeId'])
         ->middleware('auth:admin');
 
     Route::get('/zones', [ZoneController::class, 'allZones'])
