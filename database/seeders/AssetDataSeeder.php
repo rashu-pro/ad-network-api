@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Asset;
+use App\Models\AssetCategory;
+use App\Models\AssetType;
 use App\Models\AssetValuation;
 use App\Models\Zone;
 use Illuminate\Database\Seeder;
@@ -11,21 +13,34 @@ class AssetDataSeeder extends Seeder
 {
     public function run()
     {
+        $assetType = AssetType::where('name', 'Online')->first();
+        $assetTypeOffline = AssetType::where('name', 'Offline')->first();
+        $assetCategory = AssetCategory::where('name', 'Magazine')->first();
         // Define assets with slugs
         $assets = [
             [
                 'name' => 'Website',
                 'slug' => 'website',
+                'asset_type_id' => $assetType?->id,
                 'is_active' => true,
             ],
             [
                 'name' => 'Mobile',
                 'slug' => 'mobile',
+                'asset_type_id' => $assetType?->id,
                 'is_active' => true,
             ],
             [
                 'name' => 'Digital Display',
                 'slug' => 'digital-display',
+                'asset_type_id' => $assetType?->id,
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Offline Ad Space',
+                'slug' => 'offline-adspace',
+                'asset_type_id' => $assetTypeOffline?->id,
+                'asset_category_id' => $assetCategory?->id,
                 'is_active' => true,
             ],
         ];
