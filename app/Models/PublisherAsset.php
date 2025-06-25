@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PublisherAsset extends Model
@@ -40,4 +41,13 @@ class PublisherAsset extends Model
     {
         return $this->belongsTo(Zone::class);
     }
+
+    /**
+     * The publisher has the images
+     */
+    public function images()
+    {
+        return $this->hasMany(PublisherAssetImage::class);
+    }
+
 }
