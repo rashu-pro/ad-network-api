@@ -5,6 +5,7 @@ namespace App\Listeners;
 use App\Enums\PublisherCampaignStatus;
 use App\Events\PublishCampaignMappingToAdServer;
 use App\Facades\AdServer;
+use App\Models\PublisherAsset;
 use App\Models\Zone;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -23,6 +24,24 @@ class CampaignMappingPublishListener
         if ($campaignMapping->is_active) {
             return;
         }
+
+        $publisherAsset = PublisherAsset::find($campaignMapping->publisher_asset_id);
+        if ($publisherAsset->asset->assetType->name == 'Offline') {
+            $latestPause = $campaignMapping->pauseHistories()
+                ->whereNull('resumed_at')
+                ->latest()
+                ->first();
+
+            if ($latestPause) {
+                $latestPause->update([
+                    'resumed_at' => now(),
+                ]);
+            }
+            Log::warning("No need to publish campaign mapping to adserver: {$campaignMapping->id}");
+            return;
+        }
+
+        Log::warning("Online asset in campaignmappingpublishlistener.php: {$campaignMapping->id}");
 
         $zone = Zone::findOrFail($campaignMapping->publisher_zone_id);
 

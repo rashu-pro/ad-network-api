@@ -7,6 +7,7 @@ use App\Events\CampaignPublished;
 use App\Facades\AdServer;
 use App\Facades\SecureApi;
 use App\Models\CampaignMapping;
+use App\Models\PublisherAsset;
 use App\Models\Zone;
 use App\Services\AdServerService;
 use Illuminate\Support\Facades\Log;
@@ -36,11 +37,20 @@ class PublishCampaignToAdserver
             }
 
             $zone = Zone::find($campaignMapping->publisher_zone_id);
-            if (!$zone) {
-                Log::warning("Zone not found for campaign mapping ID: {$campaignMapping->id}");
+            $publisherAsset = PublisherAsset::find($campaignMapping->publisher_asset_id);
+            if ($publisherAsset->asset->assetType->name == 'Offline') {
+                $campaignMapping->update(['is_active' => true]);
+                $campaignMapping->refresh();
+
+                if($campaignMapping->publisher){
+                    $publisher = SecureApi::getUser($campaignMapping->publisher->secure_api_id, $campaignMapping->publisher->email);
+                    if($publisher){
+                        $publishers[] = $publisher['businessName'].'-'.'<a href="'.$campaignMapping->publisherAsset->url.'">'.$campaignMapping->publisherAsset->asset->name.'</a>';
+                    }
+                }
+                Log::warning("Offline asset: {$campaignMapping->id}");
             }
 
-            $isActive = true;
             if ($zone && $campaignMapping->status === PublisherCampaignStatus::APPROVE) {
                 // Create Zone
                 $zoneAdserverId = AdServer::createZone(
@@ -90,18 +100,18 @@ class PublishCampaignToAdserver
                     (int)$campaignMapping->campaign_adserver_id
                 );
 
+                $campaignMapping->update(['is_active' => $isActive]);
+                $campaignMapping->refresh();
+
                 if (!$isActive) {
                     throw new HttpException(500, "Campaign already published!");
                 }
-            }
 
-            $campaignMapping->update(['is_active' => $isActive]);
-            $campaignMapping->refresh();
-
-            if($campaignMapping->publisher){
-                $publisher = SecureApi::getUser($campaignMapping->publisher->secure_api_id, $campaignMapping->publisher->email);
-                if($publisher){
-                    $publishers[] = $publisher['businessName'].'-'.'<a href="'.$campaignMapping->publisherAsset->url.'">'.$campaignMapping->publisherAsset->asset->name.'</a>';
+                if($campaignMapping->publisher){
+                    $publisher = SecureApi::getUser($campaignMapping->publisher->secure_api_id, $campaignMapping->publisher->email);
+                    if($publisher){
+                        $publishers[] = $publisher['businessName'].'-'.'<a href="'.$campaignMapping->publisherAsset->url.'">'.$campaignMapping->publisherAsset->asset->name.'</a>';
+                    }
                 }
             }
         }

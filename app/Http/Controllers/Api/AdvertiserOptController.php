@@ -18,6 +18,7 @@ use App\Listeners\PublishCampaignToAdserver;
 use App\Models\Campaign;
 use App\Models\CampaignMapping;
 use App\Models\CampaignPayment;
+use App\Models\PublisherAsset;
 use App\Models\User;
 use App\Models\Zone;
 use App\Services\AdvertiserService;
@@ -353,11 +354,11 @@ class AdvertiserOptController extends Controller
                 $z = Zone::find($zoneId);
                 return [
                     'id' => $zoneId,
-                    'asset_id' => $z->asset_id,
-                    'asset_name' => $z->asset->name,
-                    'type_id' => $z->type_id,
-                    'width' => $z->width,
-                    'height' => $z->height,
+                    'asset_id' => $z?->asset_id,
+                    'asset_name' => $z?->asset->name,
+                    'type_id' => $z?->type_id,
+                    'width' => $z?->width,
+                    'height' => $z?->height,
                     'publisher_ids' => $group->pluck('publisher_id')->unique()->values()->toArray()
                 ];
             })
@@ -480,36 +481,55 @@ class AdvertiserOptController extends Controller
             )
         ]
     )]
+
     public function uploadCampaign(Campaign $campaign, Request $request)
     {
         $request->validate([
             'banner' => 'required|file|mimes:jpg,jpeg,png',
-            'publisher_ids' => 'required|array|min:1', // Ensures at least one publisher ID is provided
+            'publisher_ids' => 'required|array|min:1',
             'publisher_ids.*' => 'required|integer|exists:users,id',
-            'zone_id' => 'required|integer|exists:publisher_assets,zone_id',
+            'zone_id' => 'nullable|integer|exists:publisher_assets,zone_id', // zone_id is now nullable
         ]);
-        $mappings = $campaign->mappings()->whereIn('publisher_id',$request->publisher_ids)
-            ->where('publisher_zone_id',$request->zone_id)
+
+        $mappings = $campaign->mappings()
+            ->whereIn('publisher_id', $request->publisher_ids)
+            ->when($request->zone_id, function ($query) use ($request) {
+                $query->where('publisher_zone_id', $request->zone_id);
+            })
             ->get();
-        if($mappings->count() <= 0){
+//        dd($mappings);
+
+        if ($mappings->isEmpty()) {
             return $this->errorResponse('Provided zone or publisher is not associated with this campaign');
         }
-        $zone = Zone::findOrFail($request->zone_id);
 
-        $validator = Validator::make($request->all(), [
-            'banner' => 'required|file|mimes:jpg,jpeg,png|dimensions:width=' . $zone->width . ',height=' . $zone->height,
-        ]);
+        $zone = null;
+        if ($request->zone_id) {
+            $zone = Zone::find($request->zone_id); // Don't fail if not found
+        }
+
+        $rules = [
+            'banner' => 'required|file|mimes:jpg,jpeg,png',
+        ];
+
+        if ($zone && $zone->width && $zone->height) {
+            $rules['banner'] .= '|dimensions:width=' . $zone->width . ',height=' . $zone->height;
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
-            throw new ValidationException($validator,'Invalid data',$validator->errors());
+            throw new ValidationException($validator, 'Invalid data', $validator->errors());
         }
+
         $tempPath = $request->file('banner')->store('temp');
         $bannerPath = storage_path('app/private/' . $tempPath);
 
         foreach ($mappings as $mapping) {
-            if($mapping->hasMedia('banner')){
+            if ($mapping->hasMedia('banner')) {
                 $mapping->clearMediaCollection('banner');
             }
+
             $mapping->addMedia($bannerPath)
                 ->withCustomProperties([
                     'publisher_id' => $mapping->publisher_id,
@@ -519,17 +539,19 @@ class AdvertiserOptController extends Controller
                 ])
                 ->preservingOriginal()
                 ->toMediaCollection('banner');
-//            var_dump($mapping->getMedia('banner')->count());
         }
-        Storage::delete('app/private/'.$tempPath);
+
+        Storage::delete('app/private/' . $tempPath);
+
         return $this->successResponse(message: 'uploaded successfully', data: [
-            'url' => $mappings->filter(function ($mapping){
+            'url' => $mappings->filter(function ($mapping) {
                 return $mapping->hasMedia('banner');
             })->map(function ($mapping) {
-                return  $mapping->getFirstMedia('banner')->getUrl();
+                return $mapping->getFirstMedia('banner')->getUrl();
             })->toArray()
         ]);
     }
+
 
     #[OA\Post(
         path: "/api/advertiser/update-campaign/{id}",
@@ -705,6 +727,7 @@ class AdvertiserOptController extends Controller
                         'assets' => $publisher->assets->map(function ($publisherAsset) {
                             return [
                                 'id' => $publisherAsset->asset->id ?? null,
+                                'publisher_asset_id' => $publisherAsset->id,
                                 'name' => $publisherAsset->asset->name ?? null,
                                 'slug' => $publisherAsset->asset->slug ?? null,
                                 'type' => $publisherAsset->asset->type ?? null,
