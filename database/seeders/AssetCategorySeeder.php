@@ -23,8 +23,8 @@ class AssetCategorySeeder extends Seeder
         ]);
 
         AssetCategory::create([
-            'name' => 'Event',
-            'description' => 'Event',
+            'name' => 'Newsletter',
+            'description' => 'Newsletter',
             'asset_type_id' => $assetType?->id
         ]);
     }
