@@ -27,7 +27,7 @@ class AssetCategoryController extends Controller
      * @return JsonResponse
      */
     #[OA\Get(
-        path: "/api/admin/asset-categories/{assetTypeId}",
+        path: "/api/admin/asset-categories/{assetTypeId}/active",
         summary: "All Active Asset Categories by Asset Type",
         security: [
             ["bearerAuth" => []],
