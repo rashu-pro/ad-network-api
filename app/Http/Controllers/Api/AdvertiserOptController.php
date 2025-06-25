@@ -299,6 +299,10 @@ class AdvertiserOptController extends Controller
         $request->validate([
             'publisher_ids' => 'required|array',
             'publisher_asset_ids' => 'required|array',
+        ],
+        [
+            'publisher_ids.required' => 'Select at least one publisher.',
+            'publisher_asset_ids.required' => 'You must select at least one Ad Space per publisher.',
         ]);
         $user = Auth::guard('api')->user();
 
