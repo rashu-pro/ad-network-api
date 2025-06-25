@@ -18,5 +18,6 @@ class DatabaseSeeder extends Seeder
         $this->call(AssetTypeSeeder::class);
         $this->call(AssetCategorySeeder::class);
         $this->call(AssetDataSeeder::class);
+        $this->call(AdminUserSeeder::class);
     }
 }
