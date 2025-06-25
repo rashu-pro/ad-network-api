@@ -35,9 +35,13 @@ class PublishCampaignToAdserver
                 continue;
             }
 
-            $zone = Zone::findOrFail($campaignMapping->publisher_zone_id);
+            $zone = Zone::find($campaignMapping->publisher_zone_id);
+            if (!$zone) {
+                Log::warning("Zone not found for campaign mapping ID: {$campaignMapping->id}");
+            }
 
-            if ($campaignMapping->status === PublisherCampaignStatus::APPROVE) {
+            $isActive = true;
+            if ($zone && $campaignMapping->status === PublisherCampaignStatus::APPROVE) {
                 // Create Zone
                 $zoneAdserverId = AdServer::createZone(
                     (int)$campaignMapping->publisherAsset->publisher_adserver_id,
@@ -86,20 +90,22 @@ class PublishCampaignToAdserver
                     (int)$campaignMapping->campaign_adserver_id
                 );
 
-                $campaignMapping->update(['is_active' => $isActive]);
-                $campaignMapping->refresh();
-
-                if (!$campaignMapping->is_active) {
+                if (!$isActive) {
                     throw new HttpException(500, "Campaign already published!");
                 }
-                if($campaignMapping->publisher){
-                    $publisher = SecureApi::getUser($campaignMapping->publisher->secure_api_id, $campaignMapping->publisher->email);
-                    if($publisher){
-                        $publishers[] = $publisher['businessName'].'-'.'<a href="'.$campaignMapping->publisherAsset->url.'">'.$campaignMapping->publisherAsset->asset->name.'</a>';
-                    }
+            }
+
+            $campaignMapping->update(['is_active' => $isActive]);
+            $campaignMapping->refresh();
+
+            if($campaignMapping->publisher){
+                $publisher = SecureApi::getUser($campaignMapping->publisher->secure_api_id, $campaignMapping->publisher->email);
+                if($publisher){
+                    $publishers[] = $publisher['businessName'].'-'.'<a href="'.$campaignMapping->publisherAsset->url.'">'.$campaignMapping->publisherAsset->asset->name.'</a>';
                 }
             }
         }
+
         if($campaign->advertiser && !empty($publishers)){
             $secureApiUser = SecureApi::getUser($campaign->advertiser->secure_api_id, $campaign->advertiser->email);
             SecureApi::sendSingleEmail(
