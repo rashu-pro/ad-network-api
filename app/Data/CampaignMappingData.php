@@ -3,6 +3,7 @@
 namespace App\Data;
 
 use AllowDynamicProperties;
+use App\Models\PublisherAsset;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -34,8 +35,22 @@ use Illuminate\Validation\ValidationException;
             'publisher_asset_id' => 'required|integer',
             'start_date' => 'required|date',
             'end_date' => 'required|date',
-//            'publisher_zone_id' => 'required|integer|exists:publisher_assets,zone_id'
         ]);
+
+        $validator->after(function ($validator) use ($data) {
+            $asset = PublisherAsset::find($data['publisher_asset_id']);
+
+            if ($asset && $asset->zone_id !== null) {
+                // Now validate publisher_zone_id
+                if (empty($data['publisher_zone_id'])) {
+                    $validator->errors()->add('publisher_zone_id', 'Zone for the publisher asset is required.');
+                } elseif (
+                    !PublisherAsset::where('zone_id', $data['publisher_zone_id'])->exists()
+                ) {
+                    $validator->errors()->add('publisher_zone_id', 'Zone for the publisher asset is invalid.');
+                }
+            }
+        });
 
         if ($validator->fails()) {
             throw new ValidationException($validator);

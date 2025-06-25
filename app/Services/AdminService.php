@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Data\AssetData;
 use App\Data\AssetValuationsData;
 use App\Data\ZoneData;
+use App\Repositories\Interfaces\AssetCategoryRepositoryInterface;
+use App\Repositories\Interfaces\AssetTypeRepositoryInterface;
 use App\Repositories\Interfaces\AssetValuationRepositoryInterface;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
 use App\Repositories\Interfaces\AssetRepositoryInterface;
@@ -19,17 +21,23 @@ class AdminService
     protected $assetRepository;
     protected $asstValutionRepository;
     protected $zoneRepository;
+    protected $assetTypeRepository;
+    protected $assetCategoryRepository;
 
     public function __construct(
         CampaignRepositoryInterface $campaignRepository,
         AssetRepositoryInterface $assetRepository,
         AssetValuationRepositoryInterface $assetValuationRepository,
-        ZoneRepositoryInterface $zoneRepository
+        ZoneRepositoryInterface $zoneRepository,
+        AssetTypeRepositoryInterface $assetTypeRepository,
+        AssetCategoryRepositoryInterface $assetCategoryRepository
     ) {
         $this->campaignRepository = $campaignRepository;
         $this->assetRepository = $assetRepository;
         $this->asstValutionRepository = $assetValuationRepository;
         $this->zoneRepository = $zoneRepository;
+        $this->assetTypeRepository = $assetTypeRepository;
+        $this->assetCategoryRepository = $assetCategoryRepository;
     }
 
     /**
@@ -183,5 +191,22 @@ class AdminService
     public function deleteZone(int $id): bool
     {
         return $this->zoneRepository->delete($id);
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getAllActiveAssetTypes(): Collection
+    {
+        return $this->assetTypeRepository->getAllActiveAssetTypes();
+    }
+
+    /**
+     * @param int $assetTypeId
+     * @return Collection
+     */
+    public function getAllActiveAssetCategoriesByAssetTypeId(int $assetTypeId): Collection
+    {
+        return $this->assetCategoryRepository->getAllActiveAssetCategoriesByAssetTypeId($assetTypeId);
     }
 }

@@ -12,12 +12,16 @@ use App\Models\Campaign;
 use App\Models\CampaignMapping;
 use App\Policies\CampaignMappingPolicy;
 use App\Policies\CampaignPolicy;
+use App\Repositories\Eloquent\AssetCategoryRepository;
 use App\Repositories\Eloquent\AssetRepository;
+use App\Repositories\Eloquent\AssetTypeRepository;
 use App\Repositories\Eloquent\AssetValuationRepository;
 use App\Repositories\Eloquent\CampaignMappingRepository;
 use App\Repositories\Eloquent\CampaignRepository;
 use App\Repositories\Eloquent\ZoneRepository;
+use App\Repositories\Interfaces\AssetCategoryRepositoryInterface;
 use App\Repositories\Interfaces\AssetRepositoryInterface;
+use App\Repositories\Interfaces\AssetTypeRepositoryInterface;
 use App\Repositories\Interfaces\AssetValuationRepositoryInterface;
 use App\Repositories\Interfaces\CampaignMappingRepositoryInterface;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
@@ -35,6 +39,8 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(AssetRepositoryInterface::class, AssetRepository::class);
+        $this->app->bind(AssetTypeRepositoryInterface::class, AssetTypeRepository::class);
+        $this->app->bind(AssetCategoryRepositoryInterface::class, AssetCategoryRepository::class);
         $this->app->bind(AssetValuationRepositoryInterface::class, AssetValuationRepository::class);
         $this->app->bind(ZoneRepositoryInterface::class, ZoneRepository::class);
         $this->app->bind(CampaignRepositoryInterface::class, CampaignRepository::class);
