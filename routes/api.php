@@ -49,10 +49,6 @@ Route::prefix('admin')->group(function () {
         ->middleware('auth:admin');
     Route::post('/assets/delete/{id}', [AssetController::class, 'deleteAsset'])
         ->middleware('auth:admin');
-    Route::get('/asset-types/active', [AssetTypeController::class, 'getAllActiveAssetTypes'])
-        ->middleware('auth:admin');
-    Route::post('/asset-categories/{assetTypeId}/active', [AssetCategoryController::class, 'getAllActiveAssetCategoriesByAssetTypeId'])
-        ->middleware('auth:admin');
 
     Route::get('/zones', [ZoneController::class, 'allZones'])
         ->middleware('auth:admin');
