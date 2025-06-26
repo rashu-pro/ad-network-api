@@ -65,6 +65,12 @@ Route::prefix('admin')->group(function () {
     Route::post('/zones/delete/{id}', [ZoneController::class, 'deleteZone'])
         ->middleware('auth:admin');
 });
+
+Route::get('/asset-types/active', [AssetTypeController::class, 'getAllActiveAssetTypes'])
+    ->middleware('auth:api');
+Route::post('/asset-categories/{assetTypeId}/active', [AssetCategoryController::class, 'getAllActiveAssetCategoriesByAssetTypeId'])
+    ->middleware('auth:api');
+
 Route::prefix('user')->group(function () {
     Route::post('/register', [UserRegisteredController::class, 'userCreate'])
         ->middleware('guest:api');
