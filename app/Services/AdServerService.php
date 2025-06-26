@@ -124,7 +124,7 @@ class AdServerService
     /**
      * Upload a banner for a campaign
      */
-    public function uploadBanner(int $campaignId, string $bannerName, string $imageUrl, string $targetUrl, int $width, int $height): int
+    public function uploadBanner(int $campaignId, string $bannerName, string $imageUrl, $targetUrl, int $width, int $height): int
     {
         $payload = [
             'campaignId' => $campaignId,

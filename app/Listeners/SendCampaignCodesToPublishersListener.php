@@ -54,7 +54,7 @@ class SendCampaignCodesToPublishersListener
 
             // Ensure it's an online asset before proceeding
 
-            if ($asset->asset->assetType->name != 'Online') {
+            if ($asset->asset->assetType->name == 'Offline') {
 
                 continue;
 
