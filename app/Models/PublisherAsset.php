@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 class PublisherAsset extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, InteractsWithMedia;
 
     protected $table = 'publisher_assets';
 
@@ -43,11 +44,12 @@ class PublisherAsset extends Model
     }
 
     /**
-     * The publisher has the images
+     * Define media collection(s) for Spatie.
      */
-    public function images()
+    public function registerMediaCollections(): void
     {
-        return $this->hasMany(PublisherAssetImage::class);
+        $this->addMediaCollection('feature')->singleFile(); // Only one feature image
+        $this->addMediaCollection('gallery');               // Multiple gallery images
     }
 
 }

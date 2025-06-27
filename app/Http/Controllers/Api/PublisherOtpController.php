@@ -525,6 +525,12 @@ class PublisherOtpController extends Controller
             'min_duration_in_hour' => 'required|numeric',
             'price_per_hour' => 'required|numeric',
             'url' => 'nullable|string',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+            'status' => 'nullable|boolean',
+            'feature_image' => 'required|image|mimes:jpg,jpeg,png|max:2048', // Required & max 2MB
+            'image_gallery' => 'required|array|min:1|max:10', // Must be an array with at least 1 image, max 10
+            'image_gallery.*' => 'image|mimes:jpg,jpeg,png|max:2048', // Each file max 2MB
         ],[
             'asset_id.required' => 'Asset reference is required.',
             'asset_id.integer' => 'Asset reference must be an integer.',
@@ -544,10 +550,32 @@ class PublisherOtpController extends Controller
             'price_per_hour.numeric' => 'Asset rate must be a number.',
 
             'url.string' => 'URL must be a string.',
+
+            'name.required' => 'Name is required.',
+            'name.string' => 'Name must be a string.',
+            'name.max' => 'Name must not exceed 255 characters.',
+
+            'description.string' => 'Description must be a string.',
+            'description.max' => 'Description must not exceed 500 characters.',
+
+            'status.boolean' => 'Status must be a boolean.',
+
+            'feature_image.required' => 'Feature image is required.',
+            'feature_image.image' => 'Feature image must be a valid image.',
+            'feature_image.mimes' => 'Feature image must be a JPG or PNG file.',
+            'feature_image.max' => 'Feature image must not exceed 2MB.',
+
+            'image_gallery.required' => 'At least one gallery image is required.',
+            'image_gallery.array' => 'Gallery images must be sent as an array.',
+            'image_gallery.min' => 'At least one gallery image is required.',
+            'image_gallery.max' => 'You may upload up to 10 gallery images.',
+            'image_gallery.*.image' => 'Each gallery image must be a valid image.',
+            'image_gallery.*.mimes' => 'Gallery images must be JPG or PNG files.',
+            'image_gallery.*.max' => 'Each gallery image must not exceed 2MB.',
         ]);
         $user = Auth::guard('api')->user();
         $asset = Asset::findOrFail($request->asset_id);
-        $data = $request->only(['asset_id','min_duration_in_hour', 'url', 'zone_id']);
+        $data = $request->only(['asset_id','min_duration_in_hour', 'url', 'zone_id', 'name', 'description', 'status']);
         $data['price_per_hour'] = $request->price_per_hour/24;
         $secureApiUser = SecureApi::getUser($user->secure_api_id,$user->email);
         $url = rtrim($request->url, '/');
@@ -587,6 +615,23 @@ class PublisherOtpController extends Controller
         $data['publisher_adserver_id'] = $publisher_adserver_id;
 
         $publisherAsset = $user->assets()->create($data);
+
+        // Upload feature image to 'feature' collection
+        if ($request->hasFile('feature_image')) {
+            $publisherAsset
+                ->addMediaFromRequest('feature_image')
+                ->toMediaCollection('feature');
+        }
+
+        // Upload multiple images to 'gallery' collection
+        if ($request->hasFile('image_gallery')) {
+            foreach ($request->file('image_gallery') as $image) {
+                $publisherAsset
+                    ->addMedia($image)
+                    ->toMediaCollection('gallery');
+            }
+        }
+
         return $this->successResponse(message: "Asset added to the publisher",data: new PublisherAssetResource($publisherAsset));
     }
 
