@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
-class PublisherAsset extends Model
+class PublisherAsset extends Model implements HasMedia
 {
     use HasFactory, SoftDeletes, InteractsWithMedia;
 
