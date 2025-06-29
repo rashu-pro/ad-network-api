@@ -744,7 +744,7 @@ class PublisherOtpController extends Controller
     {
         $request->validate([
             'asset_id' => 'required|integer|exists:assets,id',
-            'zone_id' => 'required|integer|exists:zones,id',
+            'zone_id' => 'nullable|integer|exists:zones,id',
             'min_population' => 'nullable|integer',
             'max_population' => 'nullable|integer',
             'min_duration_in_hour' => 'required|numeric',
@@ -754,14 +754,13 @@ class PublisherOtpController extends Controller
             'description' => 'nullable|string|max:500',
             'status' => 'nullable|boolean',
             'feature_image' => 'required|image|mimes:jpg,jpeg,png|max:2048', // Required & max 2MB
-            'image_gallery' => 'required|array|min:1|max:10', // Must be an array with at least 1 image, max 10
-            'image_gallery.*' => 'image|mimes:jpg,jpeg,png|max:2048', // Each file max 2MB
+            'image_gallery' => 'nullable|array|max:20', // Optional, but must be an array with max 20
+            'image_gallery.*' => 'image|mimes:jpg,jpeg,png|max:2048', // Each file (if any) must be valid
         ],[
-            'asset_id.required' => 'Asset reference is required.',
-            'asset_id.integer' => 'Asset reference must be an integer.',
-            'asset_id.exists' => 'The selected asset does not exist.',
+            'asset_id.required' => 'Ad Space is required.',
+            'asset_id.integer' => 'Ad Space must be an integer.',
+            'asset_id.exists' => 'The selected ad space does not exist.',
 
-            'zone_id.required' => 'Zone is required.',
             'zone_id.integer' => 'Zone ID must be an integer.',
             'zone_id.exists' => 'The selected zone does not exist.',
 
@@ -771,8 +770,8 @@ class PublisherOtpController extends Controller
             'min_duration_in_hour.required' => 'Minimum duration (in hours) is required.',
             'min_duration_in_hour.numeric' => 'Minimum duration must be a number.',
 
-            'price_per_hour.required' => 'Asset rate is required.',
-            'price_per_hour.numeric' => 'Asset rate must be a number.',
+            'price_per_hour.required' => 'Ad Space rate is required.',
+            'price_per_hour.numeric' => 'Ad Space rate must be a number.',
 
             'url.string' => 'URL must be a string.',
 
@@ -790,9 +789,7 @@ class PublisherOtpController extends Controller
             'feature_image.mimes' => 'Feature image must be a JPG or PNG file.',
             'feature_image.max' => 'Feature image must not exceed 2MB.',
 
-            'image_gallery.required' => 'At least one gallery image is required.',
             'image_gallery.array' => 'Gallery images must be sent as an array.',
-            'image_gallery.min' => 'At least one gallery image is required.',
             'image_gallery.max' => 'You may upload up to 10 gallery images.',
             'image_gallery.*.image' => 'Each gallery image must be a valid image.',
             'image_gallery.*.mimes' => 'Gallery images must be JPG or PNG files.',
@@ -808,18 +805,34 @@ class PublisherOtpController extends Controller
         $asset = Asset::findOrFail($request->asset_id);
         $data = $request->only(['asset_id', 'min_duration_in_hour', 'url', 'zone_id', 'name', 'description', 'status']);
         $data['price_per_hour'] = $request->price_per_hour / 24;
-
         $secureApiUser = SecureApi::getUser($user->secure_api_id, $user->email);
-        $url = rtrim($request->url, '/');
-        $data['webhook_path'] = $url ? "{$url}/wp-json/adserver/v1/zone-scripts/web" : '';
 
-        if ($asset->slug != 'website' && $asset->type == 'online') {
-            $domain = $this->getDomainOnly($request->url);
-            $data['webhook_path'] = $domain ? "{$domain}/wp-json/adserver/v1/{$secureApiUser['secure_api_id']}/zone-scripts/{$asset->slug}" : '';
+        // Return early if assetType is null
+        if (!$asset->assetType) {
+            return $this->errorResponse(message: 'Type not found for the selected Ad space.', status: 422);
         }
 
-        if ($asset->type == 'online' && (!$request->has('url') || $request->get('url') == null)) {
-            return $this->errorResponse(message: 'URL is required for online asset', status: 422);
+        // For online
+        if($asset->assetType->name == 'Online'){
+
+            if(!$request->has('zone_id') || $request->get('zone_id') == null){
+                return $this->errorResponse(message: 'Zone is required for online Ad Space',status: 422);
+            }
+
+            if(!$request->has('url') || $request->get('url') == null){
+                return $this->errorResponse(message: 'Url is required for online Ad Space',status: 422);
+            }
+        }
+
+        // Only for online
+        if($asset->assetType->name == 'Online'){
+            $url = rtrim($request->url, '/');
+            $data['webhook_path'] = $url ? "{$url}/wp-json/adserver/v1/zone-scripts/web": '';
+
+            if($asset->slug != 'website'){
+                $domain = $this->getDomainOnly($request->url);
+                $data['webhook_path'] = $domain ? "{$domain}/wp-json/adserver/v1/{$secureApiUser['secure_api_id']}/zone-scripts/{$asset->slug}": '';
+            }
         }
 
         $validator = $this->asrv->validateAsset($request->asset_id, $request->min_population, $request->max_population ?? null);
@@ -849,7 +862,10 @@ class PublisherOtpController extends Controller
             }
         }
 
-        return $this->successResponse(message: "Asset updated successfully", data: new PublisherAssetResource($publisherAsset));
+        return $this->successResponse(
+            message: "Ad Space updated successfully",
+            data: new PublisherAssetResource($publisherAsset->refresh())
+        );
     }
 
     function getDomainOnly($url) {     $parsedUrl = parse_url($url);     return isset($parsedUrl['scheme'], $parsedUrl['host'])         ? "{$parsedUrl['scheme']}://{$parsedUrl['host']}" : null; }
