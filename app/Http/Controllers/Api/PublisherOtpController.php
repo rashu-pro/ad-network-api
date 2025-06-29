@@ -577,14 +577,20 @@ class PublisherOtpController extends Controller
         $data['price_per_hour'] = $request->price_per_hour/24;
         $secureApiUser = SecureApi::getUser($user->secure_api_id,$user->email);
 
+        // Return early if assetType is null
+        if (!$asset->assetType) {
+            return $this->errorResponse(message: 'Type not found for the selected Ad space.', status: 422);
+        }
+
         // For online
         if($asset->assetType->name == 'Online'){
-            if(!$request->has('url') || $request->get('url') == null){
-                return $this->errorResponse(message: 'Url is required for online Ad Space',status: 422);
-            }
 
             if(!$request->has('zone_id') || $request->get('zone_id') == null){
                 return $this->errorResponse(message: 'Zone is required for online Ad Space',status: 422);
+            }
+
+            if(!$request->has('url') || $request->get('url') == null){
+                return $this->errorResponse(message: 'Url is required for online Ad Space',status: 422);
             }
         }
 
@@ -646,7 +652,10 @@ class PublisherOtpController extends Controller
             }
         }
 
-        return $this->successResponse(message: "Ad Space added for the Mosque",data: new PublisherAssetResource($publisherAsset));
+        return $this->successResponse(
+            message: "Ad Space added for the Mosque",
+            data: new PublisherAssetResource($publisherAsset->refresh())
+        );
     }
 
     /**
