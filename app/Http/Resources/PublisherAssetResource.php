@@ -16,8 +16,8 @@ class PublisherAssetResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'asset_name' => $this->asset->name,
-            'asset_type' => $this->asset->assetType->name,
+            'asset_name' => $this->asset?->name,
+            'asset_type' => $this->asset?->assetType?->name,
             'url' => $this->url,
             'min_duration_in_hour' => $this->min_duration_in_hour,
             'price_per_hour' => $this->price_per_hour,
