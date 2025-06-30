@@ -13,6 +13,7 @@ use App\Facades\AdServer;
 use App\Facades\SecureApi;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AssetZoneResource;
+use App\Http\Resources\CampaignMappingResource;
 use App\Http\Resources\CampaignResource;
 use App\Http\Resources\PublisherAssetResource;
 use App\Http\Resources\PublisherEarningDetailsResource;
@@ -269,7 +270,8 @@ class PublisherOtpController extends Controller
             ->where('status', PublisherCampaignStatus::APPROVE->value)
             ->where('is_active', true)
             ->get();
-        return $this->successResponse('Active mapping on the asset', $mappings->toArray());
+        $mappings = CampaignMappingResource::collection($mappings);
+        return $this->successResponse('Active mapping on the asset', $mappings);
     }
 
     #[OA\Get(
