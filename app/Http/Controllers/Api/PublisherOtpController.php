@@ -751,7 +751,6 @@ class PublisherOtpController extends Controller
             'max_population' => 'nullable|integer',
             'min_duration_in_hour' => 'required|numeric',
             'price_per_hour' => 'required|numeric',
-            'url' => 'nullable|string',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
             'status' => 'nullable|boolean',
@@ -774,8 +773,6 @@ class PublisherOtpController extends Controller
 
             'price_per_hour.required' => 'Ad Space rate is required.',
             'price_per_hour.numeric' => 'Ad Space rate must be a number.',
-
-            'url.string' => 'URL must be a string.',
 
             'name.required' => 'Name is required.',
             'name.string' => 'Name must be a string.',
@@ -805,7 +802,7 @@ class PublisherOtpController extends Controller
             return $this->errorResponse(message: 'The requested asset is either missing or not accessible.', status: 404);
         }
         $asset = Asset::findOrFail($request->asset_id);
-        $data = $request->only(['asset_id', 'min_duration_in_hour', 'url', 'zone_id', 'name', 'description', 'status']);
+        $data = $request->only(['asset_id', 'min_duration_in_hour', 'zone_id', 'name', 'description', 'status']);
         $data['price_per_hour'] = $request->price_per_hour / 24;
         $secureApiUser = SecureApi::getUser($user->secure_api_id, $user->email);
 
@@ -819,21 +816,6 @@ class PublisherOtpController extends Controller
 
             if(!$request->has('zone_id') || $request->get('zone_id') == null){
                 return $this->errorResponse(message: 'Zone is required for online Ad Space',status: 422);
-            }
-
-            if(!$request->has('url') || $request->get('url') == null){
-                return $this->errorResponse(message: 'Url is required for online Ad Space',status: 422);
-            }
-        }
-
-        // Only for online
-        if($asset->assetType->name == 'Online'){
-            $url = rtrim($request->url, '/');
-            $data['webhook_path'] = $url ? "{$url}/wp-json/adserver/v1/zone-scripts/web": '';
-
-            if($asset->slug != 'website'){
-                $domain = $this->getDomainOnly($request->url);
-                $data['webhook_path'] = $domain ? "{$domain}/wp-json/adserver/v1/{$secureApiUser['secure_api_id']}/zone-scripts/{$asset->slug}": '';
             }
         }
 
