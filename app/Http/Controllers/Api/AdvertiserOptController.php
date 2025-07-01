@@ -28,9 +28,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
@@ -304,6 +306,57 @@ class AdvertiserOptController extends Controller
             'publisher_ids.required' => 'Select at least one Adspace to run your ad.',
             'publisher_asset_ids.required' => 'You must select at least one Ad Space per publisher.',
         ]);
+
+        $targetUrl = $request->target_url;
+
+        if (!empty($targetUrl)) {
+            $formattedUrl = trim($targetUrl);
+
+            // Remove leading www. after protocol or at start
+            $formattedUrl = preg_replace(
+                '/^(https?:\/\/)?www\./i', // Match optional http(s) + www.
+                '$1',                      // Keep the http(s) part, remove www.
+                $formattedUrl
+            );
+
+            // If it starts with http://, check if https:// version is available
+            if (Str::startsWith($formattedUrl, 'http://')) {
+                $httpsUrl = preg_replace('/^http:\/\//', 'https://', $formattedUrl);
+
+                if ($this->isUrlReachable($httpsUrl)) {
+                    $formattedUrl = $httpsUrl;
+                }else{
+                    if(!$this->isUrlReachable($formattedUrl)){
+                        throw ValidationException::withMessages([
+                            'target_url' => ['The target URL is not valid or reachable.']
+                        ]);
+                    }
+                }
+            }
+
+            // If no scheme or starts with https://, validate reachability
+            else {
+                // If no http(s) scheme, add https://
+                if (!preg_match('/^https?:\/\//', $formattedUrl)) {
+                    $formattedUrl = 'https://' . ltrim($formattedUrl, '/');
+                }
+
+                // If it's not reachable with https, try fallback with http
+                if (!$this->isUrlReachable($formattedUrl)) {
+                    $fallbackUrl = preg_replace('/^https:\/\//', 'http://', $formattedUrl);
+                    if (!$this->isUrlReachable($fallbackUrl)) {
+                        throw ValidationException::withMessages([
+                            'target_url' => ['The target URL is not valid or reachable.']
+                        ]);
+                    }
+                    $formattedUrl = $fallbackUrl;
+                }
+            }
+
+            // Replace the validated & corrected URL in the request
+            $request->merge(['target_url' => $formattedUrl]);
+        }
+
         $user = Auth::guard('api')->user();
 
         $campaignData = $request->only([
@@ -344,6 +397,18 @@ class AdvertiserOptController extends Controller
 
         return $this->successResponse(message: 'created successfully', data: new CampaignResource($campaign));
     }
+
+    private function isUrlReachable(string $url): bool
+    {
+        try {
+            $response = Http::timeout(10)->get($url);
+            // true for 2xx status codes
+            return $response->successful();
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
 
     public function getUniqueZones(Campaign $campaign)
     {
