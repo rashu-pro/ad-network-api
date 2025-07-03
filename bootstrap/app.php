@@ -26,6 +26,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class
         ]);
 
+        $middleware->alias([
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+        ]);
+
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, Request $request) {
@@ -60,8 +66,9 @@ return Application::configure(basePath: dirname(__DIR__))
            if ($request->is('api/*')) {
                return response()->json([
                    'success' => false,
-                   'message' => $e->getMessage()
-               ],404);
+                   'message' => $e->getMessage(),
+                   'error' => $e->errors()
+               ],422);
            }
         });
 
@@ -71,6 +78,22 @@ return Application::configure(basePath: dirname(__DIR__))
                    'success' => false,
                    'message' => $e->getMessage()
                ],500);
+           }
+        });
+        $exceptions->render(function(\Illuminate\Database\Eloquent\ModelNotFoundException $e,Request $request) {
+           if ($request->is('api/*')) {
+               return response()->json([
+                   'success' => false,
+                   'message' => "Resource not found."
+               ],404);
+           }
+        });
+        $exceptions->render(function(\App\Exceptions\SecureApiException $e,Request $request) {
+           if ($request->is('api/*')) {
+               return response()->json([
+                   'success' => false,
+                   'message' => $e->getMessage()
+               ],$e->getStatusCode());
            }
         });
     })->create();
