@@ -14,18 +14,25 @@ class AssetCategorySeeder extends Seeder
      */
     public function run(): void
     {
-        $assetType = AssetType::where('name', 'Offline')->first();
+        $assetTypeOffline = AssetType::where('name', 'Offline')->first();
 
-        AssetCategory::create([
-            'name' => 'Magazine',
-            'description' => 'Magazine',
-            'asset_type_id' => $assetType?->id
-        ]);
+        if($assetTypeOffline){
+            AssetCategory::firstOrCreate(
+                ['name' => 'Magazine'],
+                [
+                    'description' => 'Magazine',
+                    'asset_type_id' => $assetTypeOffline->id,
+                ]
+            );
 
-        AssetCategory::create([
-            'name' => 'Newsletter',
-            'description' => 'Newsletter',
-            'asset_type_id' => $assetType?->id
-        ]);
+            AssetCategory::firstOrCreate(
+                ['name' => 'Newsletter'],
+                [
+                    'description' => 'Newsletter',
+                    'asset_type_id' => $assetTypeOffline->id,
+                ]
+            );
+        }
+
     }
 }

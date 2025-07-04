@@ -13,7 +13,15 @@ class AssetTypeSeeder extends Seeder
      */
     public function run(): void
     {
-        AssetType::create(['name' => 'Online', 'description' => 'Online', 'status' => 1]);
-        AssetType::create(['name' => 'Offline', 'description' => 'Offline' , 'status' => 1]);
+        AssetType::firstOrCreate(
+            ['name' => 'Online'],
+            ['description' => 'Online', 'status' => 1]
+        );
+
+        AssetType::firstOrCreate(
+            ['name' => 'Offline'],
+            ['description' => 'Offline', 'status' => 1]
+        );
     }
+
 }
