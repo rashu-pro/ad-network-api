@@ -18,16 +18,16 @@ class AssetCategorySeeder extends Seeder
 
         if($assetTypeOffline){
             AssetCategory::firstOrCreate(
+                ['name' => 'Magazine'],
                 [
-                    'name' => 'Magazine',
                     'description' => 'Magazine',
                     'asset_type_id' => $assetTypeOffline->id,
                 ]
             );
 
             AssetCategory::firstOrCreate(
+                ['name' => 'Newsletter'],
                 [
-                    'name' => 'Newsletter',
                     'description' => 'Newsletter',
                     'asset_type_id' => $assetTypeOffline->id,
                 ]
