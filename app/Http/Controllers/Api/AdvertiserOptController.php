@@ -18,6 +18,7 @@ use App\Listeners\PublishCampaignToAdserver;
 use App\Models\Campaign;
 use App\Models\CampaignMapping;
 use App\Models\CampaignPayment;
+use App\Models\PublisherAsset;
 use App\Models\User;
 use App\Models\Zone;
 use App\Services\AdvertiserService;
@@ -27,9 +28,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
@@ -297,7 +300,63 @@ class AdvertiserOptController extends Controller
     {
         $request->validate([
             'publisher_ids' => 'required|array',
+            'publisher_asset_ids' => 'required|array',
+        ],
+        [
+            'publisher_ids.required' => 'Select at least one Adspace to run your ad.',
+            'publisher_asset_ids.required' => 'You must select at least one Ad Space per publisher.',
         ]);
+
+        $targetUrl = $request->target_url;
+
+        if (!empty($targetUrl)) {
+            $formattedUrl = trim($targetUrl);
+
+            // Remove leading www. after protocol or at start
+            $formattedUrl = preg_replace(
+                '/^(https?:\/\/)?www\./i', // Match optional http(s) + www.
+                '$1',                      // Keep the http(s) part, remove www.
+                $formattedUrl
+            );
+
+            // If it starts with http://, check if https:// version is available
+            if (Str::startsWith($formattedUrl, 'http://')) {
+                $httpsUrl = preg_replace('/^http:\/\//', 'https://', $formattedUrl);
+
+                if ($this->isUrlReachable($httpsUrl)) {
+                    $formattedUrl = $httpsUrl;
+                }else{
+                    if(!$this->isUrlReachable($formattedUrl)){
+                        throw ValidationException::withMessages([
+                            'target_url' => ['The target URL is not valid or reachable.']
+                        ]);
+                    }
+                }
+            }
+
+            // If no scheme or starts with https://, validate reachability
+            else {
+                // If no http(s) scheme, add https://
+                if (!preg_match('/^https?:\/\//', $formattedUrl)) {
+                    $formattedUrl = 'https://' . ltrim($formattedUrl, '/');
+                }
+
+                // If it's not reachable with https, try fallback with http
+                if (!$this->isUrlReachable($formattedUrl)) {
+                    $fallbackUrl = preg_replace('/^https:\/\//', 'http://', $formattedUrl);
+                    if (!$this->isUrlReachable($fallbackUrl)) {
+                        throw ValidationException::withMessages([
+                            'target_url' => ['The target URL is not valid or reachable.']
+                        ]);
+                    }
+                    $formattedUrl = $fallbackUrl;
+                }
+            }
+
+            // Replace the validated & corrected URL in the request
+            $request->merge(['target_url' => $formattedUrl]);
+        }
+
         $user = Auth::guard('api')->user();
 
         $campaignData = $request->only([
@@ -313,38 +372,43 @@ class AdvertiserOptController extends Controller
             return $this->errorResponse('You have to run ad for at least '.$minDuration.' Days');
         }
         $campaign = $this->advertiserService->createCampaign($campaignData);
-        $publishersData = User::whereHas('roles', function ($query) {
-                $query->where('name', RolesEnum::PUBLISHER->value);
-            })->whereIn('id', $request->publisher_ids)
-            ->has('assets')
-            ->with('assets')
-            ->get()
-            ->map(function ($publisher) use ($request,$user){
-                return $publisher->assets->map(function ($asset) use ($publisher,$request,$user) {
-                    $startDate = Carbon::parse($request->start_date);
-                    $endDate = Carbon::parse($request->end_date);
-                    $days = $startDate->diffInDays($endDate) + 1; // Include the start day
-                    // Calculate the total price
-                    $calculatedPrice = $asset->price_per_hour * 24 * $days;
 
-                    return [
-                        'advertiser_id' => $user->id,
-                        'publisher_id' => $publisher->id,
-                        'publisher_asset_id' => $asset->id,
-                        'publisher_zone_id' => $asset->zone_id,
-                        'start_date' => $request->start_date,
-                        'end_date' => $request->end_date,
-                        'calculated_price' => $calculatedPrice,
-                        'is_active' => false,
-                    ];
-                })->toArray(); // Convert collection to array
-            })
-            ->flatten(1) // Flatten nested arrays
-            ->toArray(); // Convert to a plain array
+        // Fetch only the selected assets
+        $publisherAssets = DB::table('publisher_assets')
+            ->whereIn('id', $request->publisher_asset_ids)
+            ->whereIn('publisher_id', $request->publisher_ids)
+            ->get();
+
+        $publishersData = $publisherAssets->map(function ($asset) use ($request, $user, $days) {
+            $calculatedPrice = $asset->price_per_hour * 24 * $days;
+
+            return [
+                'advertiser_id' => $user->id,
+                'publisher_id' => $asset->publisher_id,
+                'publisher_asset_id' => $asset->id,
+                'publisher_zone_id' => $asset->zone_id,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'calculated_price' => $calculatedPrice,
+                'is_active' => false,
+            ];
+        })->toArray();
         $this->advertiserService->selectPublishers($campaign->id,$publishersData);
 
         return $this->successResponse(message: 'created successfully', data: new CampaignResource($campaign));
     }
+
+    private function isUrlReachable(string $url): bool
+    {
+        try {
+            $response = Http::timeout(10)->get($url);
+            // true for 2xx status codes
+            return $response->successful();
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
 
     public function getUniqueZones(Campaign $campaign)
     {
@@ -359,11 +423,11 @@ class AdvertiserOptController extends Controller
                 $z = Zone::find($zoneId);
                 return [
                     'id' => $zoneId,
-                    'asset_id' => $z->asset_id,
-                    'asset_name' => $z->asset->name,
-                    'type_id' => $z->type_id,
-                    'width' => $z->width,
-                    'height' => $z->height,
+                    'asset_id' => $z?->asset_id,
+                    'asset_name' => $z?->asset->name,
+                    'type_id' => $z?->type_id,
+                    'width' => $z?->width,
+                    'height' => $z?->height,
                     'publisher_ids' => $group->pluck('publisher_id')->unique()->values()->toArray()
                 ];
             })
@@ -486,36 +550,55 @@ class AdvertiserOptController extends Controller
             )
         ]
     )]
+
     public function uploadCampaign(Campaign $campaign, Request $request)
     {
         $request->validate([
             'banner' => 'required|file|mimes:jpg,jpeg,png',
-            'publisher_ids' => 'required|array|min:1', // Ensures at least one publisher ID is provided
+            'publisher_ids' => 'required|array|min:1',
             'publisher_ids.*' => 'required|integer|exists:users,id',
-            'zone_id' => 'required|integer|exists:publisher_assets,zone_id',
+            'zone_id' => 'nullable|integer|exists:publisher_assets,zone_id', // zone_id is now nullable
         ]);
-        $mappings = $campaign->mappings()->whereIn('publisher_id',$request->publisher_ids)
-            ->where('publisher_zone_id',$request->zone_id)
+
+        $mappings = $campaign->mappings()
+            ->whereIn('publisher_id', $request->publisher_ids)
+            ->when($request->zone_id, function ($query) use ($request) {
+                $query->where('publisher_zone_id', $request->zone_id);
+            })
             ->get();
-        if($mappings->count() <= 0){
+//        dd($mappings);
+
+        if ($mappings->isEmpty()) {
             return $this->errorResponse('Provided zone or publisher is not associated with this campaign');
         }
-        $zone = Zone::findOrFail($request->zone_id);
 
-        $validator = Validator::make($request->all(), [
-            'banner' => 'required|file|mimes:jpg,jpeg,png|dimensions:width=' . $zone->width . ',height=' . $zone->height,
-        ]);
+        $zone = null;
+        if ($request->zone_id) {
+            $zone = Zone::find($request->zone_id); // Don't fail if not found
+        }
+
+        $rules = [
+            'banner' => 'required|file|mimes:jpg,jpeg,png',
+        ];
+
+        if ($zone && $zone->width && $zone->height) {
+            $rules['banner'] .= '|dimensions:width=' . $zone->width . ',height=' . $zone->height;
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
-            throw new ValidationException($validator,'Invalid data',$validator->errors());
+            throw new ValidationException($validator, 'Invalid data', $validator->errors());
         }
+
         $tempPath = $request->file('banner')->store('temp');
         $bannerPath = storage_path('app/private/' . $tempPath);
 
         foreach ($mappings as $mapping) {
-            if($mapping->hasMedia('banner')){
+            if ($mapping->hasMedia('banner')) {
                 $mapping->clearMediaCollection('banner');
             }
+
             $mapping->addMedia($bannerPath)
                 ->withCustomProperties([
                     'publisher_id' => $mapping->publisher_id,
@@ -525,17 +608,19 @@ class AdvertiserOptController extends Controller
                 ])
                 ->preservingOriginal()
                 ->toMediaCollection('banner');
-//            var_dump($mapping->getMedia('banner')->count());
         }
-        Storage::delete('app/private/'.$tempPath);
+
+        Storage::delete('app/private/' . $tempPath);
+
         return $this->successResponse(message: 'uploaded successfully', data: [
-            'url' => $mappings->filter(function ($mapping){
+            'url' => $mappings->filter(function ($mapping) {
                 return $mapping->hasMedia('banner');
             })->map(function ($mapping) {
-                return  $mapping->getFirstMedia('banner')->getUrl();
+                return $mapping->getFirstMedia('banner')->getUrl();
             })->toArray()
         ]);
     }
+
 
     #[OA\Post(
         path: "/api/advertiser/update-campaign/{id}",
@@ -711,6 +796,7 @@ class AdvertiserOptController extends Controller
                         'assets' => $publisher->assets->map(function ($publisherAsset) {
                             return [
                                 'id' => $publisherAsset->asset->id ?? null,
+                                'publisher_asset_id' => $publisherAsset->id,
                                 'name' => $publisherAsset->asset->name ?? null,
                                 'slug' => $publisherAsset->asset->slug ?? null,
                                 'type' => $publisherAsset->asset->type ?? null,

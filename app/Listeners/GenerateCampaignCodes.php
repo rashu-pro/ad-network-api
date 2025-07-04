@@ -5,6 +5,8 @@ namespace App\Listeners;
 use App\Events\CampaignPublished;
 use App\Events\SendCampaignCodesToPublishers;
 use App\Facades\AdServer;
+use App\Models\PublisherAsset;
+use App\Models\Zone;
 use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -28,6 +30,12 @@ class GenerateCampaignCodes implements ShouldDispatchAfterCommit
         try {
             foreach ($mappings as $mapping) {
                 if (!$mapping->is_active) {
+                    continue;
+                }
+
+                $publisherAsset = PublisherAsset::find($mapping->publisher_asset_id);
+                if ($publisherAsset->asset->assetType->name == 'Offline') {
+                    Log::warning("No Codes needs to be generated from adserver since the ad for offline asset: {$mapping->id}");
                     continue;
                 }
 

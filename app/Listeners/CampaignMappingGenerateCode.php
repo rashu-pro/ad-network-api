@@ -5,6 +5,7 @@ namespace App\Listeners;
 use App\Events\PublishCampaignMappingToAdServer;
 use App\Events\SendCampaignCodesToPublishers;
 use App\Facades\AdServer;
+use App\Models\PublisherAsset;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\DB;
@@ -26,9 +27,18 @@ class CampaignMappingGenerateCode
                 return;
             }
 
+            $publisherAsset = PublisherAsset::find($mapping->publisher_asset_id);
+            if ($publisherAsset->asset->assetType->name == 'Offline') {
+                Log::warning("No Codes needs to be generated from adserver since the ad for offline asset (Campaignmappinggeneratecode): {$mapping->id}");
+                return;
+            }
+
+
             // Fetch campaign code from AdServer
             $mapping->code = AdServer::getCampaignEmbedsByAdZone($mapping->publisher_zone_adserver_id);
             $mapping->save();
+
+            Log::info("zone code: {$mapping->code}");
 
             DB::commit();
             SendCampaignCodesToPublishers::dispatch($mapping->campaign->mappings()->get());

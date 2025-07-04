@@ -7,6 +7,7 @@ use App\Events\CampaignPublished;
 use App\Facades\AdServer;
 use App\Facades\SecureApi;
 use App\Models\CampaignMapping;
+use App\Models\PublisherAsset;
 use App\Models\Zone;
 use App\Services\AdServerService;
 use Illuminate\Support\Facades\Log;
@@ -35,9 +36,22 @@ class PublishCampaignToAdserver
                 continue;
             }
 
-            $zone = Zone::findOrFail($campaignMapping->publisher_zone_id);
+            $zone = Zone::find($campaignMapping->publisher_zone_id);
+            $publisherAsset = PublisherAsset::find($campaignMapping->publisher_asset_id);
+            if ($publisherAsset->asset->assetType->name == 'Offline') {
+                $campaignMapping->update(['is_active' => true]);
+                $campaignMapping->refresh();
 
-            if ($campaignMapping->status === PublisherCampaignStatus::APPROVE) {
+                if($campaignMapping->publisher){
+                    $publisher = SecureApi::getUser($campaignMapping->publisher->secure_api_id, $campaignMapping->publisher->email);
+                    if($publisher){
+                        $publishers[] = $publisher['businessName'].'-'.'<a href="'.$campaignMapping->publisherAsset->url.'">'.$campaignMapping->publisherAsset->asset->name.'</a>';
+                    }
+                }
+                Log::warning("Offline asset: {$campaignMapping->id}");
+            }
+
+            if ($zone && $campaignMapping->status === PublisherCampaignStatus::APPROVE) {
                 // Create Zone
                 $zoneAdserverId = AdServer::createZone(
                     (int)$campaignMapping->publisherAsset->publisher_adserver_id,
@@ -89,9 +103,10 @@ class PublishCampaignToAdserver
                 $campaignMapping->update(['is_active' => $isActive]);
                 $campaignMapping->refresh();
 
-                if (!$campaignMapping->is_active) {
+                if (!$isActive) {
                     throw new HttpException(500, "Campaign already published!");
                 }
+
                 if($campaignMapping->publisher){
                     $publisher = SecureApi::getUser($campaignMapping->publisher->secure_api_id, $campaignMapping->publisher->email);
                     if($publisher){
@@ -100,6 +115,7 @@ class PublishCampaignToAdserver
                 }
             }
         }
+
         if($campaign->advertiser && !empty($publishers)){
             $secureApiUser = SecureApi::getUser($campaign->advertiser->secure_api_id, $campaign->advertiser->email);
             SecureApi::sendSingleEmail(
