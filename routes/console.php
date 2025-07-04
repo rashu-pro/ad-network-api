@@ -13,5 +13,5 @@ use Illuminate\Support\Facades\Schedule;
 //Schedule::command('zone:create-test')->everyMinute();
 
 
-Schedule::command(TriggerCampaignPublishing::class)->everyMinute();
-Schedule::command(CompleteExpiredCampaignMappings::class)->everyMinute();
+Schedule::command(TriggerCampaignPublishing::class)->everyFiveMinutes();
+Schedule::command(CompleteExpiredCampaignMappings::class)->everyFiveMinutes();
