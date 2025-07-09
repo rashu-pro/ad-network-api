@@ -44,7 +44,7 @@ Route::prefix('admin')->group(function () {
     Route::get('/assets', [AssetController::class, 'allAssets'])
         ->middleware('auth:admin');
     Route::get('/assets/active', [AssetController::class, 'allActiveAssets'])
-        ->middleware('auth:admin');
+        ->middleware('auth:api');
     Route::post('/assets/add', [AssetController::class, 'createAsset'])
         ->middleware('auth:admin');
     Route::post('/assets/delete/{id}', [AssetController::class, 'deleteAsset'])
