@@ -30,6 +30,7 @@ use App\Repositories\Interfaces\CampaignMappingRepositoryInterface;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
 use App\Services\AdvertiserService;
 use App\Services\BillingService;
+use App\Services\PublisherService;
 use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -52,18 +53,21 @@ class PublisherOtpController extends Controller
     protected AssetValuationRepositoryInterface $asrv;
     protected CampaignRepositoryInterface $cmp;
     protected AdvertiserService $advertiserService;
+    protected PublisherService  $publisherService;
 
     public function __construct(
         AssetRepositoryInterface $asr,
         AssetValuationRepositoryInterface $asrv,
         CampaignRepositoryInterface $cmp,
-        AdvertiserService $advertiserService
+        AdvertiserService $advertiserService,
+        PublisherService $publisherService
     )
     {
         $this->asr = $asr;
         $this->asrv = $asrv;
         $this->cmp = $cmp;
         $this->advertiserService = $advertiserService;
+        $this->publisherService = $publisherService;
     }
 
     #[OA\Get(
@@ -834,6 +838,23 @@ class PublisherOtpController extends Controller
             data: new PublisherAssetResource($publisherAsset->refresh())
         );
     }
+
+    public function updateAssetStatus(int $id)
+    {
+        $publisherAsset = $this->publisherService->togglePublisherAssetStatus($id);
+
+        if (!$publisherAsset) {
+            return $this->errorResponse('The requested AdSpace is missing or not accessible.', status: 404);
+        }
+
+        $status = $publisherAsset->status ? 'enabled' : 'disabled';
+
+        return $this->successResponse("AdSpace has been {$status} successfully.", [
+            'asset_id' => $publisherAsset->id,
+            'status' => $status
+        ]);
+    }
+
 
     function getDomainOnly($url) {     $parsedUrl = parse_url($url);     return isset($parsedUrl['scheme'], $parsedUrl['host'])         ? "{$parsedUrl['scheme']}://{$parsedUrl['host']}" : null; }
 
