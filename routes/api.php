@@ -44,7 +44,7 @@ Route::prefix('admin')->group(function () {
     Route::get('/assets', [AssetController::class, 'allAssets'])
         ->middleware('auth:admin');
     Route::get('/assets/active', [AssetController::class, 'allActiveAssets'])
-        ->middleware('auth:admin');
+        ->middleware('auth:api');
     Route::post('/assets/add', [AssetController::class, 'createAsset'])
         ->middleware('auth:admin');
     Route::post('/assets/delete/{id}', [AssetController::class, 'deleteAsset'])
@@ -108,7 +108,8 @@ Route::prefix('advertiser')->middleware('auth:api')->group(function (){
 Route::prefix('publisher')->middleware('auth:api')->group(function (){
     Route::get('/campaign/{campaign}',[\App\Http\Controllers\Api\AdvertiserOptController::class,'getCampaign']);
     Route::post('/set-asset',[\App\Http\Controllers\Api\PublisherOtpController::class,'setAsset'])->middleware('permission:create asset,api');
-    Route::put('/asset/update/{id}', [\App\Http\Controllers\Api\PublisherOtpController::class, 'updateAsset'])->middleware('permission:update asset,api');
+    Route::post('/asset/update/{id}', [\App\Http\Controllers\Api\PublisherOtpController::class, 'updateAsset'])->middleware('permission:update asset,api');
+    Route::post('/asset/update/status/{id}', [\App\Http\Controllers\Api\PublisherOtpController::class, 'updateAssetStatus']);
     Route::post('/campaign-approval/{campaign}',[\App\Http\Controllers\Api\PublisherOtpController::class,'publishCampaign'])->middleware('can:updateStatus,campaign');
     Route::post('/update-campaign-mapping-status/{campaignMapping}',[\App\Http\Controllers\Api\PublisherOtpController::class,'updateCampaignMappingStatus']);
     Route::get('/assets',[\App\Http\Controllers\Api\PublisherOtpController::class,'assets'])->middleware('role:ad_publisher,api');

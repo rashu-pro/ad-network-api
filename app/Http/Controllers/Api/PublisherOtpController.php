@@ -30,6 +30,7 @@ use App\Repositories\Interfaces\CampaignMappingRepositoryInterface;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
 use App\Services\AdvertiserService;
 use App\Services\BillingService;
+use App\Services\PublisherService;
 use App\Traits\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -52,18 +53,21 @@ class PublisherOtpController extends Controller
     protected AssetValuationRepositoryInterface $asrv;
     protected CampaignRepositoryInterface $cmp;
     protected AdvertiserService $advertiserService;
+    protected PublisherService  $publisherService;
 
     public function __construct(
         AssetRepositoryInterface $asr,
         AssetValuationRepositoryInterface $asrv,
         CampaignRepositoryInterface $cmp,
-        AdvertiserService $advertiserService
+        AdvertiserService $advertiserService,
+        PublisherService $publisherService
     )
     {
         $this->asr = $asr;
         $this->asrv = $asrv;
         $this->cmp = $cmp;
         $this->advertiserService = $advertiserService;
+        $this->publisherService = $publisherService;
     }
 
     #[OA\Get(
@@ -745,8 +749,6 @@ class PublisherOtpController extends Controller
     public function updateAsset(Request $request, int $id)
     {
         $request->validate([
-            'asset_id' => 'required|integer|exists:assets,id',
-            'zone_id' => 'nullable|integer|exists:zones,id',
             'min_population' => 'nullable|integer',
             'max_population' => 'nullable|integer',
             'min_duration_in_hour' => 'required|numeric',
@@ -758,13 +760,6 @@ class PublisherOtpController extends Controller
             'image_gallery' => 'nullable|array|max:20', // Optional, but must be an array with max 20
             'image_gallery.*' => 'image|mimes:jpg,jpeg,png|max:2048', // Each file (if any) must be valid
         ],[
-            'asset_id.required' => 'Ad Space is required.',
-            'asset_id.integer' => 'Ad Space must be an integer.',
-            'asset_id.exists' => 'The selected ad space does not exist.',
-
-            'zone_id.integer' => 'Zone ID must be an integer.',
-            'zone_id.exists' => 'The selected zone does not exist.',
-
             'min_population.integer' => 'Minimum population must be an integer.',
             'max_population.integer' => 'Maximum population must be an integer.',
 
@@ -802,21 +797,13 @@ class PublisherOtpController extends Controller
             return $this->errorResponse(message: 'The requested asset is either missing or not accessible.', status: 404);
         }
         $asset = Asset::findOrFail($request->asset_id);
-        $data = $request->only(['asset_id', 'min_duration_in_hour', 'zone_id', 'name', 'description', 'status']);
+        $data = $request->only(['min_duration_in_hour', 'name', 'description', 'status']);
         $data['price_per_hour'] = $request->price_per_hour / 24;
         $secureApiUser = SecureApi::getUser($user->secure_api_id, $user->email);
 
         // Return early if assetType is null
         if (!$asset->assetType) {
             return $this->errorResponse(message: 'Type not found for the selected Ad space.', status: 422);
-        }
-
-        // For online
-        if($asset->assetType->name == 'Online'){
-
-            if(!$request->has('zone_id') || $request->get('zone_id') == null){
-                return $this->errorResponse(message: 'Zone is required for online Ad Space',status: 422);
-            }
         }
 
         $validator = $this->asrv->validateAsset($request->asset_id, $request->min_population, $request->max_population ?? null);
@@ -851,6 +838,23 @@ class PublisherOtpController extends Controller
             data: new PublisherAssetResource($publisherAsset->refresh())
         );
     }
+
+    public function updateAssetStatus(int $id)
+    {
+        $publisherAsset = $this->publisherService->togglePublisherAssetStatus($id);
+
+        if (!$publisherAsset) {
+            return $this->errorResponse('The requested AdSpace is missing or not accessible.', status: 404);
+        }
+
+        $status = $publisherAsset->status ? 'enabled' : 'disabled';
+
+        return $this->successResponse("AdSpace has been {$status} successfully.", [
+            'asset_id' => $publisherAsset->id,
+            'status' => $status
+        ]);
+    }
+
 
     function getDomainOnly($url) {     $parsedUrl = parse_url($url);     return isset($parsedUrl['scheme'], $parsedUrl['host'])         ? "{$parsedUrl['scheme']}://{$parsedUrl['host']}" : null; }
 

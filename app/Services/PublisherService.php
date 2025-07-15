@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Models\AssetValuation;
+use App\Models\PublisherAsset;
 use App\Repositories\Interfaces\AssetRepositoryInterface;
 use App\Repositories\Interfaces\CampaignRepositoryInterface;
 use App\Repositories\Interfaces\CampaignMappingRepositoryInterface;
+use App\Repositories\Interfaces\PublisherRepositoryInterface;
 use Illuminate\Support\Collection;
 
 class PublisherService
@@ -13,15 +15,23 @@ class PublisherService
     protected $assetRepository;
     protected $campaignRepository;
     protected $campaignMappingRepository;
+    protected $publisherRepository;
 
     public function __construct(
         AssetRepositoryInterface $assetRepository,
         CampaignRepositoryInterface $campaignRepository,
-        CampaignMappingRepositoryInterface $campaignMappingRepository
+        CampaignMappingRepositoryInterface $campaignMappingRepository,
+        PublisherRepositoryInterface $publisherRepository
     ) {
         $this->assetRepository = $assetRepository;
         $this->campaignRepository = $campaignRepository;
         $this->campaignMappingRepository = $campaignMappingRepository;
+        $this->publisherRepository = $publisherRepository;
+    }
+
+    public function togglePublisherAssetStatus(int $id): ?PublisherAsset
+    {
+        return $this->publisherRepository->togglePublisherAssetStatus($id);
     }
 
     public function selectAsset(int $assetId)
